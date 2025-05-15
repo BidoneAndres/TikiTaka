@@ -1,18 +1,19 @@
 //librerias
+
 const express = require('express'); //framework para crear el servidor
 const mysql = require('mysql'); //libreria para conectarse a la base de datos
 const bodyParser = require('body-parser'); //libreria para parsear el body de las peticiones
 const cors = require('cors'); //libreria para permitir peticiones de otros dominios
+
 /*Parsear significa analizar o descomponer una estructura de datos o texto según ciertas reglas para entender su contenido y trabajar con él */
 
 const app = express(); //crear una instancia de express
 
 //Configuracion de middleware
+
 app.use(cors()); //permitir peticiones de otros dominios
 app.use(bodyParser.json()); //parsear el body de las peticiones a json
 app.use(express.static('public')); //servir archivos estaticos desde la carpeta public
-/*Un archivo estático es un archivo que no cambia dinámicamente y que el servidor 
-entrega tal cual está almacenado, sin modificarlo ni procesarlo.*/
 app.use(express.urlencoded({ extended: true })); // para formularios tipo HTML
 app.use(express.json()); 
 
@@ -27,6 +28,7 @@ app.listen(PORT, () => {
 let db; // Esta variable contendrá la conexión global a la base de datos "tikitaka"
 
 //Crear conexión sin base de datos para poder crearla
+
 const tempDb = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -80,6 +82,11 @@ tempDb.connect((err) => {
 });
 
 //Rutas POST para procesar login y registro 
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/Pantalla1.html');
+});
+
 app.post('/login', (req, res) => {
     const {username, password} = req.body; //extraer el email y password del body de la peticion
 
@@ -103,7 +110,7 @@ app.post('/login', (req, res) => {
 //Ruta para el registro de usuarios
 app.post('/register', (req, res) => {
     const { username, name, lastname, email, birthdate, password, repPassword } = req.body; //extraer el email y password del body de la peticion
-onclick = "login()" 
+
     //verificar si el usuario ya existe
     const sql = 'SELECT * FROM usuarios WHERE username = ? OR email = ?';
     db.query(sql, [username, email], (err, result) => {
@@ -124,8 +131,7 @@ onclick = "login()"
                 db.query(sql, [username, name, lastname, birthdate, email, password], (err, result) => {
                 if (err) return res.status(500).send('error en la carga de los datos'); //si hay un error en la consulta, enviar un error 500
                 //si el registro es exitoso, enviar un mensaje de exito
-                res.send({success: true, message: 'Registro exitoso'}); 
-                res.redirect('/login.html');
+                res.redirect('/login'); //redireccionar a la pagina de inicio
             });
             }
         }
