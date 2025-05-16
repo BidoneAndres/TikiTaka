@@ -1,5 +1,4 @@
 //librerias
-
 const express = require('express'); //framework para crear el servidor
 const mysql = require('mysql'); //libreria para conectarse a la base de datos
 const bodyParser = require('body-parser'); //libreria para parsear el body de las peticiones
@@ -16,6 +15,7 @@ app.use(bodyParser.json()); //parsear el body de las peticiones a json
 app.use(express.static('public')); //servir archivos estaticos desde la carpeta public
 app.use(express.urlencoded({ extended: true })); // para formularios tipo HTML
 app.use(express.json()); 
+
 
 //asignacion de puerto
 const PORT = 3000;
@@ -40,7 +40,7 @@ tempDb.connect((err) => {
   console.log('✅ Conectado a MySQL (sin DB)');
 
   //Crear base de datos si no existe
-  tempDb.query('CREATE DATABASE IF NOT EXISTS tikitaka', (err, result) => {
+  tempDb.query('CREATE DATABASE IF NOT EXISTS tikitaka', (err, res) => {
     if (err) throw err;
     console.log('✅ Base de datos tikitaka creada o ya existía');
 
@@ -72,7 +72,7 @@ tempDb.connect((err) => {
             password VARCHAR(255) NOT NULL
           )
         `;
-        db.query(createTableQuery, (err, result) => {
+        db.query(createTableQuery, (err, res) => {
           if (err) throw err;
           console.log('✅ Tabla usuarios creada o ya existía');
         });
@@ -87,52 +87,57 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/Pantalla1.html');
 });
 
+const bcrypt = require('bcrypt'); //libreria para encriptar contraseñas
+
+//Ruta para el login de usuarios
 app.post('/login', (req, res) => {
-    const {username, password} = req.body; //extraer el email y password del body de la peticion
+    const {username, password} = req.body;
 
-    //consulta a la base de datos para verificar si el usuario existe
-    const sql = 'SELECT * FROM usuarios WHERE username = ? AND password = ?';
-
-    db.query(sql, [username, password], (err, result) => {
-        if (err){
-
-            return res.status(500).send('Error en la conexion');
-
-        } 
+    const sql = 'SELECT * FROM usuarios WHERE username = ?';
+    db.query(sql, [username], async (err, result) => {
+        if (err) return res.status(500).send('Error en la conexion');
         if(result.length > 0) {
-            res.send({successs: true, message: 'Login exitoso'}); //si el usuario existe, enviar un mensaje de exito y el usuario
+            const user = result[0];
+            const match = await bcrypt.compare(password, user.password);
+            if (match) {
+                res.send({success: true, message: 'Login exitoso'});
+            } else {
+                res.send({success: false, message: 'Usuario o contraseña incorrectos'});
+            }
         } else {
-            res.send({success: false, message: 'Usuario o contraseña incorrectos'}); //si el usuario no existe, enviar un mensaje de error
+            res.send({success: false, message: 'Usuario o contraseña incorrectos'});
         }
     });
 });
 
 //Ruta para el registro de usuarios
-app.post('/register', (req, res) => {
-    const { username, name, lastname, email, birthdate, password, repPassword } = req.body; //extraer el email y password del body de la peticion
+app.post('/register', async (req, res) => {
+    const { username, name, lastname, email, birthdate, password, repPassword } = req.body;
 
     //verificar si el usuario ya existe
     const sql = 'SELECT * FROM usuarios WHERE username = ? OR email = ?';
-    db.query(sql, [username, email], (err, result) => {
-        if (err) return res.status(500).send('user o mail en uso'); //si hay un error en la consulta, enviar un error 500
+    db.query(sql, [username, email], async (err, result) => {
+        if (err) return res.status(500).send('user o mail en uso');
         if(result.length > 0) {
-            return res.send({success: false, message: 'El usuario o email ya estan en uso'}); //si el usuario ya existe, enviar un mensaje de error
+            return res.send({success: false, message: 'El usuario o email ya estan en uso'});
         } else {
-            //verificar el largo de la contraseña
             if(password.length < 8) {
-                return res.send({success: false, message: 'La contraseña debe tener al menos 8 caracteres'}); //si la contraseña es menor a 8 caracteres, enviar un mensaje de error
+                return res.send({success: false, message: 'La contraseña debe tener al menos 8 caracteres'});
             }
-            //verificar si las contraseñas coinciden
             if(password !== repPassword) {
-                return res.send({success: false, message: 'Las contraseñas no coinciden'}); //si las contraseñas no coinciden, enviar un mensaje de error
-            }else{
-                //insertar el nuevo usuario en la base de datos 
-                const sql = 'INSERT INTO usuarios (username, name, lastname, birthdate, email, password) VALUES (?, ?, ?, ?, ?, ?)';
-                db.query(sql, [username, name, lastname, birthdate, email, password], (err, result) => {
-                if (err) return res.status(500).send('error en la carga de los datos'); //si hay un error en la consulta, enviar un error 500
-                //si el registro es exitoso, enviar un mensaje de exito
-                res.redirect('/login'); //redireccionar a la pagina de inicio
-            });
+                return res.send({success: false, message: 'Las contraseñas no coinciden'});
+            } else {
+                // Hashear la contraseña antes del INSERT
+                try {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    const sql = 'INSERT INTO usuarios (username, name, lastname, birthdate, email, password) VALUES (?, ?, ?, ?, ?, ?)';
+                    db.query(sql, [username, name, lastname, birthdate, email, hashedPassword], (err, result) => {
+                        if (err) return res.status(500).send('error en la carga de los datos');
+                        res.send({success: true, message: 'Registro exitoso'});
+                    });
+                } catch (e) {
+                    return res.status(500).send('Error al encriptar la contraseña');
+                }
             }
         }
     });

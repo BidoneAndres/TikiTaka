@@ -1,6 +1,9 @@
 async function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.className = "";
 
     const res = await fetch('http://localhost:3000/login', {
         method: 'POST',
@@ -10,14 +13,14 @@ async function login() {
         body: JSON.stringify({ username, password })
     });
     const data = await res.json();
+
     if (data.success) {
-        // Si el login es exitoso, redirigir a la página de inicio
-        window.location.href = 'public/Pantalla1.html';
+        window.location.href = 'Pantalla1.html';
     } else {
-        // Si el login falla, mostrar el mensaje de error
-        document.getElementById('message').innerText = data.message;
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
     }
-    document.getElementById('message').innerText = data.message;
 }
 
 async function register() {
@@ -31,6 +34,10 @@ async function register() {
     const password = document.getElementById('password').value;
     const repPassword = document.getElementById('repPassword').value;
 
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.className = "";
+
     const res = await fetch('http://localhost:3000/register', {
         method: 'POST',
         headers: {
@@ -38,7 +45,14 @@ async function register() {
         },
         body: JSON.stringify({ username, name, lastname, email, birthdate, password, repPassword }) // <-- repPassword corregido
     });
-
+    
     const data = await res.json();
-    document.getElementById('message').innerText = data.message;
+
+    if (data.success) {
+        window.location.href = 'login.html';
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
 }
