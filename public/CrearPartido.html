@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Partido</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+        }
+
+        #boton {
+            color: white;
+            background-color: rgba(182, 194, 179, 1);
+            height: 70px;
+            width: 75%;
+            border: none;
+            font-size: 24px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.5s ease-in-out;
+            margin: 20px auto;
+        }
+
+        #boton:hover {
+            transform: scale(1.1);
+        }
+
+        .form-control {
+            border-radius: 15px;
+            font-size: 18px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .sidebar {
+            background-color: rgba(82, 131, 71, 1);
+            height: 100vh;
+            color: white;
+            padding-top: 20px;
+        }
+
+        .sidebar img {
+            margin-left: 20px;
+        }
+
+        .form-section {
+            background-color: rgba(182, 194, 179, 1);
+            height: 100vh;
+            padding: 40px;
+        }
+
+        h2 {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-enviar {
+            background-color: #528347;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            padding: 10px 20px;
+            font-size: 20px;
+        }
+
+        .btn-enviar:hover {
+            background-color: #416b38;
+        }
+
+        .cerrar-sesion {
+            margin-top: 100px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .cerrar-sesion a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-3 sidebar d-flex flex-column align-items-center">
+            <img src="img/logo.png" alt="Logo" width="80">
+            <h3 class="mt-3">Tiki Taka</h3>
+
+            <button id="boton" onclick="location.href='jugador.html'">Jugador</button>
+            <button id="boton" onclick="location.href='historial.html'">Historial</button>
+            <button id="boton" onclick="location.href='equipo.html'">Equipo</button>
+            <button id="boton" onclick="location.href='partidos.html'">Partidos</button>
+
+            <div class="cerrar-sesion">
+                Asistencia <br>
+                <a href="#">Cerrar sesión</a>
+            </div>
+        </div>
+
+        <!-- Formulario de creación -->
+        <div class="col-9 form-section">
+            <h2>Crear Partido</h2>
+            <form action="/crear-partido" method="POST" class="w-75 mx-auto">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label for="fecha">Fecha</label>
+                        <input type="date" class="form-control" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="cancha">Nro de Cancha</label>
+                        <input type="number" class="form-control" id="cancha" name="cancha" required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="horario">Horario</label>
+                        <input type="time" class="form-control" id="horario" name="horario" required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="jugadores">Nro de Jugadores</label>
+                        <input type="number" class="form-control" id="jugadores" name="jugadores" required>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn-enviar">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
