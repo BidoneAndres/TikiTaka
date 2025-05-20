@@ -115,15 +115,11 @@
         <!-- Formulario de creación -->
         <div class="col-9 form-section">
             <h2>Crear Partido</h2>
-            <form action="/crear-partido" method="POST" class="w-75 mx-auto">
+            <form action="/crearpartido" method="POST" class="w-75 mx-auto">
                 <div class="row">
                     <div class="col-md-6 form-group">
                         <label for="fecha">Fecha</label>
                         <input type="date" class="form-control" id="fecha" name="fecha" required>
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label for="cancha">Nro de Cancha</label>
-                        <input type="number" class="form-control" id="cancha" name="cancha" required>
                     </div>
                     <div class="col-md-6 form-group">
                         <label for="horario">Horario</label>
@@ -142,6 +138,13 @@
         </div>
     </div>
 </div>
-
+<script src="/js/script.js"></script>
+<script>
+    document.getElementById('crearPartido').addEventListener('submit', function(event) {
+    event.preventDefault();
+    crearPartido();
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -16,7 +16,7 @@ app.use(express.static('public')); //servir archivos estaticos desde la carpeta 
 app.use(express.urlencoded({ extended: true })); // para formularios tipo HTML
 app.use(express.json()); 
 
-
+let userId; // Variable para almacenar el ID del usuario logueado
 //asignacion de puerto
 const PORT = 3000;
 app.listen(PORT, () => {
@@ -26,7 +26,6 @@ app.listen(PORT, () => {
 //Configuracion de la base de datos
 
 let db; // Esta variable contendrá la conexión global a la base de datos "tikitaka"
-
 //Crear conexión sin base de datos para poder crearla
 
 const tempDb = mysql.createConnection({
@@ -88,7 +87,7 @@ app.get('/', (req, res) => {
 });
 
 const bcrypt = require('bcrypt'); //libreria para encriptar contraseñas
-
+let userLoggedIn = 0;
 //Ruta para el login de usuarios
 app.post('/login', (req, res) => {
     const {username, password} = req.body;
@@ -100,7 +99,9 @@ app.post('/login', (req, res) => {
             const user = result[0];
             const match = await bcrypt.compare(password, user.password);
             if (match) {
+                userLoggedIn = result[0].id // Guardar el ID del usuario logueado
                 res.send({success: true, message: 'Login exitoso'});
+                console.log(userLoggedIn);
             } else {
                 res.send({success: false, message: 'Usuario o contraseña incorrectos'});
             }
@@ -141,4 +142,60 @@ app.post('/register', async (req, res) => {
             }
         }
     });
+});
+
+app.post('/crearPartido', (req, res) => {
+  const { jugadores, fecha, horario } = req.body;
+  const createTable = `
+    CREATE TABLE IF NOT EXISTS partidos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      owner INT NOT NULL,
+      jugadores INT NOT NULL,
+      fecha DATE NOT NULL,
+      hora TIME NOT NULL,
+      FOREIGN KEY (owner) REFERENCES usuarios(id)
+    )
+  `;
+  db.query(createTable, (err) => {
+    if (err) throw err;
+
+    const plantel = [userLoggedIn];
+    const sqlInsert = 'INSERT INTO partidos (owner, jugadores, fecha, hora) VALUES (?, ?, ?, ?)';
+    db.query(sqlInsert, [userLoggedIn, jugadores, fecha, horario], (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error al crear el partido');
+      }
+      const id_partido = result.insertId;
+
+      // Crear tabla plantel con el id correcto
+      const createTablePlantel = `
+        CREATE TABLE IF NOT EXISTS plantel_${id_partido} (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          id_partido INT NOT NULL,
+          plantel VARCHAR(255) NOT NULL,
+          FOREIGN KEY (id_partido) REFERENCES partidos(id)
+        )
+      `;
+      db.query(createTablePlantel, (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Error al crear la tabla de jugadores');
+        }
+
+        // Insertar owner en la tabla plantel
+        const insertOwner = `
+          INSERT INTO plantel_${id_partido} (id_partido, plantel) VALUES (?,?)
+        `;
+        db.query(insertOwner, [id_partido, plantel], (err) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).send('Error al insertar el owner en la tabla de jugadores');
+          }
+          // Solo aquí respondemos al cliente
+          res.send({success: true, message: 'Partido y plantel creados exitosamente', id_partido});
+        });
+      });
+    });
+  });
 });

@@ -15,7 +15,7 @@ async function login() {
     const data = await res.json();
 
     if (data.success) {
-        window.location.href = 'Pantalla1.html';
+        window.location.href = 'partidosUsuario.html';
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
@@ -50,6 +50,33 @@ async function register() {
 
     if (data.success) {
         window.location.href = 'login.html';
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
+}
+
+async function crearPartido() {
+    const fecha = document.getElementById('fecha').value;
+    const horario = document.getElementById('horario').value;
+    const jugadores = document.getElementById('Jugadores').value;
+
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.className = "";
+
+    const res = await fetch('http://localhost:3000/crearPartido', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fecha, horario, jugadores })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = 'partidosUsuario.html';
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
