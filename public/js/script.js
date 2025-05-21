@@ -83,3 +83,46 @@ async function crearPartido() {
         msgDiv.innerText = data.message;
     }
 }
+
+async function mostrarPartidos(){
+    const partidosList = document.getElementById('partidosList');
+    partidosList.innerHTML = '<p style="color:#edcd3d;">Cargando Partidos...</p>';
+
+    try {
+        const res = await fetch('http://localhost:3000/mostrarPartidos');
+        const data = await res.json();
+        // CORRIGE ESTA CONDICIÓN:
+        if (!data.success || !data.partidos || data.partidos.length === 0) {
+            partidosList.innerHTML = '<p style="color:#edcd3d;">No hay partidos.</p>';
+            return;
+        }
+
+        partidosList.innerHTML = '';
+for (const partido of data.partidos) {
+    const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
+    const dataUsername = await resUsername.json();
+    if (!dataUsername.success) {
+        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
+        return;
+    }
+    const username = dataUsername.username;
+    const card = document.createElement('div');
+    const cantJugadores = 14 - partido.jugadores;
+    card.innerHTML += `
+        <div class="card m-3 p-0" style="width: 18rem;">
+            <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">${username}</h5>
+                <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                <p class="card-text">Dia: ${partido.fecha}</p>
+                <p class="card-text">Hora: ${partido.hora}</p>
+                <a href="#" class="btn btn-primary">A jugar!</a>
+            </div>
+        </div>`;
+    partidosList.appendChild(card);
+}
+    } catch (error) {
+        console.error('Error al cargar los partidos:', error);
+        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
+    }
+}

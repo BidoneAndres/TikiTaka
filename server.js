@@ -168,12 +168,17 @@ app.post('/crearPartido', (req, res) => {
       }
       const id_partido = result.insertId;
 
+      let jugadorFields = '';
+      for (let i = 1; i <= jugadores; i++) {
+        jugadorFields += `id_jugador${i} INT${i === 1 ? ' NOT NULL' : ''},\n`;
+      }
+
       // Crear tabla plantel con el id correcto
       const createTablePlantel = `
-        CREATE TABLE IF NOT EXISTS plantel_${id_partido} (
+        CREATE TABLE IF NOT EXISTS plantel_${id_partido}(
           id INT AUTO_INCREMENT PRIMARY KEY,
           id_partido INT NOT NULL,
-          plantel VARCHAR(255) NOT NULL,
+          ${jugadorFields}
           FOREIGN KEY (id_partido) REFERENCES partidos(id)
         )
       `;
@@ -185,9 +190,9 @@ app.post('/crearPartido', (req, res) => {
 
         // Insertar owner en la tabla plantel
         const insertOwner = `
-          INSERT INTO plantel_${id_partido} (id_partido, plantel) VALUES (?,?)
+          INSERT INTO plantel_${id_partido} (id_partido, id_jugador1) VALUES (?,?)
         `;
-        db.query(insertOwner, [id_partido, plantel], (err) => {
+        db.query(insertOwner, [id_partido, userLoggedIn], (err) => {
           if (err) {
             console.error(err);
             return res.status(500).send('Error al insertar el owner en la tabla de jugadores');
@@ -197,5 +202,41 @@ app.post('/crearPartido', (req, res) => {
         });
       });
     });
+  });
+});
+
+app.get('/mostrarPartidos', (req, res) => {
+  console.log('🔎 Endpoint /mostrarPartidos llamado');
+  db.query('SELECT * FROM partidos;', (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los partidos');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, partidos: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, partidos: result});
+  });
+});
+
+app.get('/getOwnerUsername/:id_partido', (req, res) => {
+  const id_partido = req.params.id_partido;
+  const sql = `
+    SELECT u.username 
+    FROM usuarios u
+    JOIN partidos p ON u.id = p.owner
+    WHERE p.id = ?
+  `;
+  db.query(sql, [id_partido], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener el nombre del owner');
+    }
+    if (result.length > 0) {
+      res.send({success: true, username: result[0].username});
+    } else {
+      res.send({success: false, message: 'Owner no encontrado'});
+    }
   });
 });
