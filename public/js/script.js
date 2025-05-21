@@ -109,7 +109,7 @@ for (const partido of data.partidos) {
     const card = document.createElement('div');
     const cantJugadores = 14 - partido.jugadores;
     card.innerHTML += `
-        <div class="card m-3 p-0" style="width: 18rem;">
+        <div class="card" style="width: 18rem;">
             <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
             <div class="card-body">
                 <h5 class="card-title">${username}</h5>
