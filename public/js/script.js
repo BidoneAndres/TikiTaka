@@ -107,6 +107,7 @@ for (const partido of data.partidos) {
     }
     const username = dataUsername.username;
     const card = document.createElement('div');
+    card.className="m-3";
     const cantJugadores = 14 - partido.jugadores;
     card.innerHTML += `
         <div class="card" style="width: 18rem;">
