@@ -84,6 +84,9 @@
         <div class="row">
             <button type="button" id="boton" onclick="window.location.href='#'" class="btn  btn-lg"> Equipo</button>
         </div>
+        <div class="row">
+            <button type="button" id="boton" onclick="window.location.href='misPartidos.html'" class="btn  btn-lg"> Mis Partidos</button>
+        </div>
         
 
 
@@ -94,9 +97,69 @@
 
 </div>
 <div class="container d-flex justify-content-center">
-    <div class="row d-flex" >
-        <div id ="partidosList"></div>
+    <div class="row d-flex ">
+    <div class="card m-3 p-0" style="width: 18rem;">
+        <img src=".\img\Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">Ney3</h5>
+            <p class="card-text">Jugadores: 1/14</p>
+            <p class="card-text">Dia: 30/10</p>
+            <p class="card-text">Hora: 20hs</p>
+            <a href="#" class="btn btn-primary">A jugar!</a>
+        </div>
     </div>
+    <div class="card m-3 p-0" style="width: 18rem;">
+        <img src=".\img\Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">Ney3</h5>
+            <p class="card-text">Jugadores: 1/14</p>
+            <p class="card-text">Dia: 30/10</p>
+            <p class="card-text">Hora: 20hs</p>
+            <a href="#" class="btn btn-primary">A jugar!</a>
+        </div>
+    </div>
+    <div class="card m-3 p-0" style="width: 18rem;">
+        <img src=".\img\Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">Ney3</h5>
+            <p class="card-text">Jugadores: 1/14</p>
+            <p class="card-text">Dia: 30/10</p>
+            <p class="card-text">Hora: 20hs</p>
+            <a href="#" class="btn btn-primary">A jugar!</a>
+        </div>
+    </div>
+    <div class="card m-3 p-0" style="width: 18rem;">
+        <img src=".\img\Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">Ney3</h5>
+            <p class="card-text">Jugadores: 1/14</p>
+            <p class="card-text">Dia: 30/10</p>
+            <p class="card-text">Hora: 20hs</p>
+            <a href="#" class="btn btn-primary">A jugar!</a>
+        </div>
+    </div>
+    <div class="card m-3 p-0" style="width: 18rem;">
+        <img src=".\img\Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">Ney3</h5>
+            <p class="card-text">Jugadores: 1/14</p>
+            <p class="card-text">Dia: 30/10</p>
+            <p class="card-text">Hora: 20hs</p>
+            <a href="#" class="btn btn-primary">A jugar!</a>
+        </div>
+    </div>
+    <div class="card m-3 p-0" style="width: 18rem;">
+        <img src=".\img\Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">Ney3</h5>
+            <p class="card-text">Jugadores: 1/14</p>
+            <p class="card-text">Dia: 30/10</p>
+            <p class="card-text">Hora: 20hs</p>
+            <a href="#" class="btn btn-primary">A jugar!</a>
+        </div>
+    </div>
+    
+</div>
 </div>
 
         <div class="row d-flex align-text-center justify-content-end">
@@ -110,7 +173,7 @@
                     <label for="fecha">Selecciona una fecha:</label>
                     <input type="date" id="fecha">
                     <label for="hora">Selecciona una hora:</label>
-                    <input type="time" id="hora">
+                    <input type="time" id="horario">
                     <p>Hora seleccionada: <span id="horaSeleccionada"></span></p>
 
                     <script>
@@ -121,7 +184,7 @@
                     </script>
                     <label for="customRange2">Cantidad de Jugadores</label>
                     <span id="valorSeleccionado">7</span> <!-- Muestra el valor inicial -->
-                    <input type="range" class="form-range" min="1" max="14" id="customRange2" oninput="actualizarValor(this.value)">
+                    <input type="range" class="form-range" min="1" max="14" id="Jugadores" oninput="actualizarValor(this.value)">
                     
 
                     <script>
@@ -129,14 +192,18 @@
                         document.getElementById("valorSeleccionado").textContent = valor;
                     }
                     </script>
+                    <button type="button" class="btn btn-light" onclick="crearPartido()">crear!</button>
+
+                    <script src="server.js"></script>
+
+                    <script src="server.js">
+                        mostrarPartidos();
+                    </script>
 
                 </div>
                 </div>
         </div>         
-        <script src="/js/script.js"></script>
-<script>
-  mostrarPartidos();
-</script>
+
 </body>
 </html>
 
