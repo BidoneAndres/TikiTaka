@@ -3,7 +3,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh; /* Asegura que el body ocupe toda la altura de la pantalla */
+    height: 100vh; 
     margin: 0px;
 }
 .bg2{
@@ -36,3 +36,5 @@ height: 250px;
     color: #FFFFFF;
     font-weight: bold;
 }
+
+
