@@ -8,13 +8,6 @@
       transform: scale(1.1); 
     }
 
-    #crear:hover{
-        transform: scale(1.1);
-    }
-
-    #crear{
-        transition: transform 0.5s ease-in-out;
-    }
 
         #boton{
             color: white;
@@ -56,10 +49,8 @@
         
         <div class="col " style="display: flex; color: white; font-size: 40px; align-items: center;">
             
-            Partidos
+            Jugador
         </div>
-
-
     </div>
     
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
@@ -76,16 +67,13 @@
         
 
         <div class="row">
-        <button type="button" id="boton" onclick="window.location.href='editarPerfil.html'" class="btn  btn-lg">Jugador</button>
+        <button type="button" id="boton" onclick="window.location.href='./partidosUsuario.html'" class="btn  btn-lg">Partidos</button>
         </div> 
          <div class="row">
             <button type="button" id="boton" onclick="window.location.href='#'" class="btn  btn-lg">Historial</button>
         </div>
         <div class="row">
             <button type="button" id="boton" onclick="window.location.href='#'" class="btn  btn-lg"> Equipo</button>
-        </div>
-        <div class="row">
-            <button type="button" id="boton" onclick="window.location.href='misPartidos.html'" class="btn  btn-lg"> Mis Partidos</button>
         </div>
         
 
@@ -96,47 +84,50 @@
     
 
 </div>
-<div class="container d-flex justify-content-center">
-    <div class="d-flex flex-wrap justify-content-center" id="partidosList"></div>
-</div>
+<div class="container " style="margin: 0 auto; width: 700px; margin-top: 50px;">
+    
 
-        <div class="row d-flex align-text-center justify-content-end">
-
-            <a class="btn p-0 display-flex justify-content-center align-items-center" data-bs-toggle="collapse" id="crear" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample" style="font-size: 30px; height:40px; width: 40px; color:white; position: fixed; bottom: 10px; right: 10px; background-color:rgba(82, 131, 71, 1);">+
-            </a>
-
-                <div class="collapse" id="collapseExample">
-                <div class="card card-body" style="width: 500px; position: fixed; bottom: 10px; right: 70px; background-color:rgba(82, 131, 71, 1); color: white; z-index: 9999;">
-                <form id = "crearPartido">
-                    <label for="fecha">Selecciona una fecha:</label>
-                    <input type="date" class="form-control" id="fecha" name="fecha" required>
-                    <label for="hora">Selecciona una hora:</label>
-                    <input type="time" class="form-control" id="horario" name="horario" required>
-                    <p>Hora seleccionada: <span id="horaSeleccionada"></span></p>
-                    <label for="customRange2">Cantidad de Jugadores</label>
-                    <span id="valorSeleccionado">7</span> <!-- Muestra el valor inicial -->
-                    <input id="jugadores" type="range" class="form-range" min="1" max="14" oninput="actualizarValor(this.value)" name = "jugadores" value="7" style="width: 100%;" required>
-                    <script>
-                    function actualizarValor(valor) {
-                        document.getElementById("valorSeleccionado").textContent = valor;
-                    }
-                    </script>
-                    <button type="submit" class="btn btn-light">crear!</button>
-                </form>
-                </div>
-                </div>
-                <div role="alert" id="message" style="display:none;">
+    <div class="row d-flex justify-content-center">
+        <img src=".\img\OIP.jpeg" alt="" style="height: 300px; width: 300px; border-radius: 40px;">
+    </div>
+    <form method="POST" id = "modUser">
+    <div class="row mt-3">
+        <label for="">Email</label>
+        <input class="form-control" type="text" value="" aria-label="readonly input example" readonly id="email">
+    </div>
+    
+    <div class="row">
+        <div class="col">
+            <label for="">Usuario</label>
+            <input type="text" class="form-control" placeholder="Nombre de Usuario" value="" aria-label="First name" id ="username">
+        </div>
+        <div class="col">
+            <label for="contrasena">Contraseña</label>
+            <input type="password" class="form-control" placeholder="Contraseña" aria-label="Last name" id ="contrasena" value="">
+            <label for="">Nueva Contraseña</label>
+            <input type="password" class="form-control" placeholder="Nueva contraseña" aria-label="Last name" id ="newContrasena">
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn-enviar">Modificar</button>
+        </div>
+        <div role="alert" id="message" style="display:none;">
             <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Warning:" style="display: none;"><use xlink:href="#exclamation-triangle-fill"/></svg>
         </div>
-        </div>         
-        <script src="js/script.js"></script>
-        <script>
-            partidosAjenos();
-            document.getElementById('crearPartido').addEventListener('submit', function(event) {
-                event.preventDefault();
-                crearPartido();
-                });
-        </script>
+    </div>
+    </form>
+    
+</div>
+</div>
+
+            
+<script src = "js/script.js"></script>
+<script>
+    cargarUser();
+    document.getElementById('modUser').addEventListener('submit', function(event) {
+    event.preventDefault();
+    modUser();
+    });
+</script>
 </body>
 </html>
 

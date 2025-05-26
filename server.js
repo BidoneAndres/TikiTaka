@@ -159,7 +159,6 @@ app.post('/crearPartido', (req, res) => {
   db.query(createTable, (err) => {
     if (err) throw err;
 
-    const plantel = [userLoggedIn];
     const sqlInsert = 'INSERT INTO partidos (owner, jugadores, fecha, hora) VALUES (?, ?, ?, ?)';
     db.query(sqlInsert, [userLoggedIn, jugadores, fecha, horario], (err, result) => {
       if (err) {
@@ -168,12 +167,17 @@ app.post('/crearPartido', (req, res) => {
       }
       const id_partido = result.insertId;
 
+      let jugadorFields = '';
+      for (let i = 1; i <= jugadores; i++) {
+        jugadorFields += `id_jugador${i} INT${i === 1 ? ' NOT NULL' : ''},\n`;
+      }
+
       // Crear tabla plantel con el id correcto
       const createTablePlantel = `
-        CREATE TABLE IF NOT EXISTS plantel_${id_partido} (
+        CREATE TABLE IF NOT EXISTS plantel_${id_partido}(
           id INT AUTO_INCREMENT PRIMARY KEY,
           id_partido INT NOT NULL,
-          plantel VARCHAR(255) NOT NULL,
+          ${jugadorFields}
           FOREIGN KEY (id_partido) REFERENCES partidos(id)
         )
       `;
@@ -185,16 +189,181 @@ app.post('/crearPartido', (req, res) => {
 
         // Insertar owner en la tabla plantel
         const insertOwner = `
-          INSERT INTO plantel_${id_partido} (id_partido, plantel) VALUES (?,?)
+          INSERT INTO plantel_${id_partido} (id_partido, id_jugador1) VALUES (?,?)
         `;
-        db.query(insertOwner, [id_partido, plantel], (err) => {
+        db.query(insertOwner, [id_partido, userLoggedIn], (err) => {
           if (err) {
             console.error(err);
             return res.status(500).send('Error al insertar el owner en la tabla de jugadores');
           }
           // Solo aquí respondemos al cliente
           res.send({success: true, message: 'Partido y plantel creados exitosamente', id_partido});
+
         });
+      });
+    });
+  });
+});
+
+app.get('/partidosAjenos', (req, res) => {
+  db.query('SELECT * FROM partidos WHERE owner != ?;', [userLoggedIn], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los partidos');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, partidos: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, partidos: result});
+  });
+});
+
+app.get('/partidosUsuario', (req, res) => {
+  db.query('SELECT * FROM partidos WHERE owner = ?;', [userLoggedIn], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los partidos');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, partidos: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, partidos: result});
+  });
+});
+
+app.get('/partidos', (req, res) => {
+  db.query('SELECT * FROM partidos;', (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los partidos');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, partidos: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, partidos: result});
+  });
+});
+
+app.get('/getOwnerUsername/:id_partido', (req, res) => {
+  const id_partido = req.params.id_partido;
+  const sql = `
+    SELECT u.username 
+    FROM usuarios u
+    JOIN partidos p ON u.id = p.owner
+    WHERE p.id = ?
+  `;
+  db.query(sql, [id_partido], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener el nombre del owner');
+    }
+    if (result.length > 0) {
+      res.send({success: true, username: result[0].username});
+    } else {
+      res.send({success: false, message: 'Owner no encontrado'});
+    }
+  });
+});
+
+app.get('/mostrarUser', (req, res) => {
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+  const sql = 'SELECT * FROM usuarios WHERE id = ?';
+  db.query(sql, [userLoggedIn], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los datos del usuario');
+    }
+    if (result.length > 0) {
+      res.send({success: true, ...result[0]});
+    } else {
+      res.send({success: false, message: 'Usuario no encontrado'});
+    }
+  });
+});
+
+app.post('/logout', (req, res) => {
+  userLoggedIn = 0; // Resetear el ID del usuario logueado
+  res.send({success: true, message: 'Logout exitoso'});
+});
+
+app.post('/modUser', (req, res) => {
+  const {username, password, newPassword} = req.body;
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+  const sql = 'SELECT * FROM usuarios WHERE id = ?';
+  db.query(sql, [userLoggedIn], async (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({success: false, message: 'Error al obtener los datos del usuario'});
+    }
+    if (result.length === 0) {
+      return res.status(404).send({success: false, message: 'Usuario no encontrado'});
+    }
+    
+    const user = result[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).send({ success: false, message: 'Contraseña actual incorrecta' });
+    }
+
+    let hashedPassword = user.password;
+    if (newPassword && newPassword.length >= 8) {
+      hashedPassword = await bcrypt.hash(newPassword, 10);
+    }
+
+    const updateSql = 'UPDATE usuarios SET username = ?, password = ? WHERE id = ?';
+    db.query(updateSql, [username, hashedPassword, userLoggedIn], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({success: false, message: 'Error al actualizar los datos del usuario'});
+      }
+      res.send({success: true, message: 'Datos actualizados exitosamente'});
+    });
+  });
+});
+
+app.post('/fichaje', (req, res) => {
+  const { id_partido } = req.body;
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+
+  // Verificar si el partido existe
+  const sqlPartido = 'SELECT * FROM partidos WHERE id = ?';
+  db.query(sqlPartido, [id_partido], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al verificar el partido');
+    }
+    if (result.length === 0) {
+      return res.status(404).send('Partido no encontrado');
+    }
+
+    // Verificar si el usuario ya está fichado
+    const sqlFichaje = `SELECT * FROM plantel_${id_partido} WHERE id_jugador1 = ?`;
+    db.query(sqlFichaje, [userLoggedIn], (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error al verificar el fichaje');
+      }
+      if (result.length > 0) {
+        return res.send({success: false, message: 'Ya estás fichado en este partido'});
+      }
+
+      // Insertar el usuario en la tabla plantel del partido
+      const insertSql = `INSERT INTO plantel_${id_partido} (id_partido, id_jugador1) VALUES (?, ?)`;
+      db.query(insertSql, [id_partido, userLoggedIn], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Error al fichar en el partido');
+        }
+        res.send({success: true, message: 'Fichaje exitoso'});
       });
     });
   });
