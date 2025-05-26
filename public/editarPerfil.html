@@ -90,22 +90,28 @@
     <div class="row d-flex justify-content-center">
         <img src=".\img\OIP.jpeg" alt="" style="height: 300px; width: 300px; border-radius: 40px;">
     </div>
-    <form action="/modificarPerfil" method="POST">
+    <form method="POST" id = "modUser">
     <div class="row mt-3">
         <label for="">Email</label>
-        <input class="form-control" type="text" value="maildeejemplo@gmail.com" aria-label="readonly input example" readonly>
+        <input class="form-control" type="text" value="" aria-label="readonly input example" readonly id="email">
     </div>
     
     <div class="row">
         <div class="col">
             <label for="">Usuario</label>
-            <input type="text" class="form-control" placeholder="Nombre de Usuario" value="Maradona1213" aria-label="First name">
+            <input type="text" class="form-control" placeholder="Nombre de Usuario" value="" aria-label="First name" id ="username">
         </div>
         <div class="col">
-            <label for="">Contraseña</label>
-            <input type="password" class="form-control" placeholder="Contraseña" aria-label="Last name">
+            <label for="contrasena">Contraseña</label>
+            <input type="password" class="form-control" placeholder="Contraseña" aria-label="Last name" id ="contrasena" value="">
             <label for="">Nueva Contraseña</label>
-            <input type="password" class="form-control" placeholder="Nueva contraseña" aria-label="Last name">
+            <input type="password" class="form-control" placeholder="Nueva contraseña" aria-label="Last name" id ="newContrasena">
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn-enviar">Modificar</button>
+        </div>
+        <div role="alert" id="message" style="display:none;">
+            <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Warning:" style="display: none;"><use xlink:href="#exclamation-triangle-fill"/></svg>
         </div>
     </div>
     </form>
@@ -114,7 +120,14 @@
 </div>
 
             
-
+<script src = "js/script.js"></script>
+<script>
+    cargarUser();
+    document.getElementById('modUser').addEventListener('submit', function(event) {
+    event.preventDefault();
+    modUser();
+    });
+</script>
 </body>
 </html>
 

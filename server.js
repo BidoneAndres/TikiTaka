@@ -240,3 +240,63 @@ app.get('/getOwnerUsername/:id_partido', (req, res) => {
     }
   });
 });
+
+app.get('/mostrarUser', (req, res) => {
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+  const sql = 'SELECT * FROM usuarios WHERE id = ?';
+  db.query(sql, [userLoggedIn], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los datos del usuario');
+    }
+    if (result.length > 0) {
+      res.send({success: true, ...result[0]});
+    } else {
+      res.send({success: false, message: 'Usuario no encontrado'});
+    }
+  });
+});
+
+app.post('/logout', (req, res) => {
+  userLoggedIn = 0; // Resetear el ID del usuario logueado
+  res.send({success: true, message: 'Logout exitoso'});
+});
+
+app.post('/modUser', (req, res) => {
+  const {username, password, newPassword} = req.body;
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+  const sql = 'SELECT * FROM usuarios WHERE id = ?';
+  db.query(sql, [userLoggedIn], async (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({success: false, message: 'Error al obtener los datos del usuario'});
+    }
+    if (result.length === 0) {
+      return res.status(404).send({success: false, message: 'Usuario no encontrado'});
+    }
+    
+    const user = result[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).send({ success: false, message: 'Contraseña actual incorrecta' });
+    }
+
+    let hashedPassword = user.password;
+    if (newPassword && newPassword.length >= 8) {
+      hashedPassword = await bcrypt.hash(newPassword, 10);
+    }
+
+    const updateSql = 'UPDATE usuarios SET username = ?, password = ? WHERE id = ?';
+    db.query(updateSql, [username, hashedPassword, userLoggedIn], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({success: false, message: 'Error al actualizar los datos del usuario'});
+      }
+      res.send({success: true, message: 'Datos actualizados exitosamente'});
+    });
+  });
+});

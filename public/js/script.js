@@ -127,3 +127,63 @@ for (const partido of data.partidos) {
         partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
     }
 }
+
+async function cargarUser(){
+    
+    const res = await fetch('http://localhost:3000/mostrarUser');
+    const data = await res.json();
+    if (!data.success) {
+        console.error('Error al obtener los datos del usuario:', data.message);
+        return;
+    }else{
+        document.getElementById('email').value = data.email;
+        document.getElementById('username').value = data.username;
+    }
+}
+
+async function logout() {
+    const res = await fetch('http://localhost:3000/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = 'login.html';
+    } else {
+        console.error('Error al cerrar sesión:', data.message);
+    }
+}
+
+async function modUser(){
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('contrasena').value;
+    const newPassword = document.getElementById('newContrasena').value;
+    msgDiv = document.getElementById('message');
+
+    const res = await fetch('http://localhost:3000/modUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password, newPassword })
+    });
+    const data = await res.json();
+    if (data.success) {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+        setTimeout(() => {
+            logout();
+        }, 3000); 
+        
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
+
+    
+
+}
