@@ -159,7 +159,6 @@ app.post('/crearPartido', (req, res) => {
   db.query(createTable, (err) => {
     if (err) throw err;
 
-    const plantel = [userLoggedIn];
     const sqlInsert = 'INSERT INTO partidos (owner, jugadores, fecha, hora) VALUES (?, ?, ?, ?)';
     db.query(sqlInsert, [userLoggedIn, jugadores, fecha, horario], (err, result) => {
       if (err) {
@@ -199,14 +198,42 @@ app.post('/crearPartido', (req, res) => {
           }
           // Solo aquí respondemos al cliente
           res.send({success: true, message: 'Partido y plantel creados exitosamente', id_partido});
+
         });
       });
     });
   });
 });
 
-app.get('/mostrarPartidos', (req, res) => {
-  console.log('🔎 Endpoint /mostrarPartidos llamado');
+app.get('/partidosAjenos', (req, res) => {
+  db.query('SELECT * FROM partidos WHERE owner != ?;', [userLoggedIn], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los partidos');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, partidos: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, partidos: result});
+  });
+});
+
+app.get('/partidosUsuario', (req, res) => {
+  db.query('SELECT * FROM partidos WHERE owner = ?;', [userLoggedIn], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los partidos');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, partidos: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, partidos: result});
+  });
+});
+
+app.get('/partidos', (req, res) => {
   db.query('SELECT * FROM partidos;', (err, result) => {
     if (err) {
       console.error(err);
@@ -297,6 +324,47 @@ app.post('/modUser', (req, res) => {
         return res.status(500).send({success: false, message: 'Error al actualizar los datos del usuario'});
       }
       res.send({success: true, message: 'Datos actualizados exitosamente'});
+    });
+  });
+});
+
+app.post('/fichaje', (req, res) => {
+  const { id_partido } = req.body;
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+
+  // Verificar si el partido existe
+  const sqlPartido = 'SELECT * FROM partidos WHERE id = ?';
+  db.query(sqlPartido, [id_partido], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al verificar el partido');
+    }
+    if (result.length === 0) {
+      return res.status(404).send('Partido no encontrado');
+    }
+
+    // Verificar si el usuario ya está fichado
+    const sqlFichaje = `SELECT * FROM plantel_${id_partido} WHERE id_jugador1 = ?`;
+    db.query(sqlFichaje, [userLoggedIn], (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error al verificar el fichaje');
+      }
+      if (result.length > 0) {
+        return res.send({success: false, message: 'Ya estás fichado en este partido'});
+      }
+
+      // Insertar el usuario en la tabla plantel del partido
+      const insertSql = `INSERT INTO plantel_${id_partido} (id_partido, id_jugador1) VALUES (?, ?)`;
+      db.query(insertSql, [id_partido, userLoggedIn], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Error al fichar en el partido');
+        }
+        res.send({success: true, message: 'Fichaje exitoso'});
+      });
     });
   });
 });

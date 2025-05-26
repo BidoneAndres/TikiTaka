@@ -107,39 +107,35 @@
 
                 <div class="collapse" id="collapseExample">
                 <div class="card card-body" style="width: 500px; position: fixed; bottom: 10px; right: 70px; background-color:rgba(82, 131, 71, 1); color: white; z-index: 9999;">
-                    Crea tu partido!
+                <form id = "crearPartido">
                     <label for="fecha">Selecciona una fecha:</label>
-                    <input type="date" id="fecha">
+                    <input type="date" class="form-control" id="fecha" name="fecha" required>
                     <label for="hora">Selecciona una hora:</label>
-                    <input type="time" id="horario">
+                    <input type="time" class="form-control" id="horario" name="horario" required>
                     <p>Hora seleccionada: <span id="horaSeleccionada"></span></p>
-
-                    <script>
-                    document.getElementById("hora").addEventListener("change", function() {
-                        const hora = this.value.split(":")[0]; // Extrae solo la hora sin minutos
-                        document.getElementById("horaSeleccionada").textContent = hora + ":00"; // Muestra solo la hora
-                    });
-                    </script>
                     <label for="customRange2">Cantidad de Jugadores</label>
                     <span id="valorSeleccionado">7</span> <!-- Muestra el valor inicial -->
-                    <input type="range" class="form-range" min="1" max="14" id="Jugadores" oninput="actualizarValor(this.value)">
-                    
-
+                    <input id="jugadores" type="range" class="form-range" min="1" max="14" oninput="actualizarValor(this.value)" name = "jugadores" value="7" style="width: 100%;" required>
                     <script>
                     function actualizarValor(valor) {
                         document.getElementById("valorSeleccionado").textContent = valor;
                     }
                     </script>
-                    <button type="button" class="btn btn-light" onclick="crearPartido()">crear!</button>
-
-                    <script src="server.js"></script>
-
+                    <button type="submit" class="btn btn-light">crear!</button>
+                </form>
                 </div>
                 </div>
+                <div role="alert" id="message" style="display:none;">
+            <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Warning:" style="display: none;"><use xlink:href="#exclamation-triangle-fill"/></svg>
+        </div>
         </div>         
         <script src="js/script.js"></script>
         <script>
-            mostrarPartidos();
+            partidosAjenos();
+            document.getElementById('crearPartido').addEventListener('submit', function(event) {
+                event.preventDefault();
+                crearPartido();
+                });
         </script>
 </body>
 </html>

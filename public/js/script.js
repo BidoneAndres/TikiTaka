@@ -60,7 +60,7 @@ async function register() {
 async function crearPartido() {
     const fecha = document.getElementById('fecha').value;
     const horario = document.getElementById('horario').value;
-    const jugadores = document.getElementById('Jugadores').value;
+    const jugadores = document.getElementById('jugadores').value;
 
     const msgDiv = document.getElementById('message');
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
@@ -81,6 +81,100 @@ async function crearPartido() {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
         msgDiv.innerText = data.message;
+    }
+}
+
+async function partidosAjenos(){
+    const partidosList = document.getElementById('partidosList');
+    partidosList.innerHTML = '<p style="color:#edcd3d;">Cargando Partidos...</p>';
+
+    try {
+        const res = await fetch('http://localhost:3000/partidosAjenos');
+        const data = await res.json();
+        // CORRIGE ESTA CONDICIÓN:
+        if (!data.success || !data.partidos || data.partidos.length === 0) {
+            partidosList.innerHTML = '<p style="color:#edcd3d;">No hay partidos.</p>';
+            return;
+        }
+
+        partidosList.innerHTML = '';
+for (const partido of data.partidos) {
+    const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
+    const dataUsername = await resUsername.json();
+    if (!dataUsername.success) {
+        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
+        return;
+    }
+    const username = dataUsername.username;
+    const card = document.createElement('div');
+    card.className="m-3";
+    const cantJugadores = 14 - partido.jugadores;
+    card.innerHTML += `
+        <div class="card" style="width: 18rem;">
+            <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+            <div class="card-body">
+            <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
+                <input type="hidden" id="id_partido" value="${partido.id}">
+                <h5 class="card-title">${username}</h5>
+                <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                <p class="card-text">Dia: ${partido.fecha}</p>
+                <p class="card-text">Hora: ${partido.hora}</p>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            </div>
+        </div>`;
+    partidosList.appendChild(card);
+}
+    } catch (error) {
+        console.error('Error al cargar los partidos:', error);
+        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
+    }
+}
+
+async function partidosUsuario(){
+    const partidosList = document.getElementById('partidosList');
+    partidosList.innerHTML = '<p style="color:#edcd3d;">Cargando Partidos...</p>';
+
+    try {
+        const res = await fetch('http://localhost:3000/partidosUsuario');
+        const data = await res.json();
+        // CORRIGE ESTA CONDICIÓN:
+        if (!data.success || !data.partidos || data.partidos.length === 0) {
+            partidosList.innerHTML = '<p style="color:#edcd3d;">No hay partidos.</p>';
+            return;
+        }
+
+        partidosList.innerHTML = '';
+for (const partido of data.partidos) {
+    const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
+    const dataUsername = await resUsername.json();
+    if (!dataUsername.success) {
+        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
+        return;
+    }
+    const username = dataUsername.username;
+    const card = document.createElement('div');
+    card.className="m-3";
+    const cantJugadores = 14 - partido.jugadores;
+    card.innerHTML += `
+        <div class="card" style="width: 18rem;">
+            <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+            <div class="card-body">
+            <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
+                <input type="hidden" id="id_partido" value="${partido.id}">
+                <h5 class="card-title">${username}</h5>
+                <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                <p class="card-text">Dia: ${partido.fecha}</p>
+                <p class="card-text">Hora: ${partido.hora}</p>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            </div>
+        </div>`;
+    partidosList.appendChild(card);
+}
+    } catch (error) {
+        console.error('Error al cargar los partidos:', error);
+        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
     }
 }
 
@@ -113,11 +207,14 @@ for (const partido of data.partidos) {
         <div class="card" style="width: 18rem;">
             <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
             <div class="card-body">
+            <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
+                <input type="hidden" id="id_partido" value="${partido.id}">
                 <h5 class="card-title">${username}</h5>
                 <p class="card-text">Jugadores: ${cantJugadores}/14</p>
                 <p class="card-text">Dia: ${partido.fecha}</p>
                 <p class="card-text">Hora: ${partido.hora}</p>
-                <a href="#" class="btn btn-primary">A jugar!</a>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
             </div>
         </div>`;
     partidosList.appendChild(card);
@@ -177,13 +274,32 @@ async function modUser(){
         setTimeout(() => {
             logout();
         }, 3000); 
-        
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
         msgDiv.innerText = data.message;
     }
+}
 
-    
-
+async function fichaje(id_partido){
+    const res = await fetch('http://localhost:3000/fichaje', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id_partido })
+    });
+    data = await res.json();
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'block';
+    if (data.success) {
+        msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
+        msgDiv.innerText = data.message;
+        setTimeout(() => {
+            window.location.href = 'misPartidos.html';
+        }, 2000); // Redirige después de 2 segundos
+    } else {
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
 }
