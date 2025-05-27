@@ -243,7 +243,7 @@ for (const partido of data.partidos) {
                 <p class="card-text">Jugadores: ${cantJugadores}/14</p>
                 <p class="card-text">Dia: ${partido.fecha}</p>
                 <p class="card-text">Hora: ${partido.hora}</p>
-                <button class="btn btn-editar btn-sm" onclick="modificarPartido(${partido.id})">Editar</button>
+                <button class="btn btn-editar btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal" onclick="abrirEditarPartido(${partido.id}, '${partido.fecha}', '${partido.hora}', ${partido.jugadores})">Editar</button>
                 <button class="btn btn-eliminar btn-sm" onclick="eliminarPartido(${partido.id})">Eliminar</button>
             </form>
             </div>
@@ -254,6 +254,15 @@ for (const partido of data.partidos) {
         console.error('Error al cargar los partidos:', error);
         partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
     }
+}
+
+function abrirEditarPartido(id, fecha, hora, jugadores) {
+    // Llenar los campos del modal con los datos del partido
+    document.querySelector('#editarModal #jugadores').value = jugadores;
+    document.querySelector('#editarModal #fecha').value = fecha;
+    document.querySelector('#editarModal #horario').value = hora;
+    // Guarda el id en un atributo del modal para usarlo luego
+    document.getElementById('editarModal').setAttribute('data-id', id);
 }
 
 async function cargarUser(){
@@ -335,29 +344,28 @@ async function fichaje(id_partido){
     }
 }
 
-async function modificarPartido(id_partido) {
-    const fecha = document.getElementById('fecha').value;
-    const horario = document.getElementById('horario').value;
-    const jugadores = document.getElementById('jugadores').value;
+async function modificarPartido() {
+    const id_partido = document.getElementById('editarModal').getAttribute('data-id');
+    const fecha = document.querySelector('#editarModal #fecha').value;
+    const horario = document.querySelector('#editarModal #horario').value;
+    const jugadores = document.querySelector('#editarModal #jugadores').value;
 
     const msgDiv = document.getElementById('message');
-    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.style.display = 'none';
     msgDiv.className = "";
 
     const res = await fetch('http://localhost:3000/modificarPartido', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_partido, fecha, horario, jugadores })
     });
 
     const data = await res.json();
     if (data.success) {
-        window.location.href = 'partidosUsuario.html';
+        window.location.reload();
     } else {
         msgDiv.style.display = 'block';
-        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center";
         msgDiv.innerText = data.message;
     }
 }
@@ -376,7 +384,12 @@ async function eliminarPartido(id_partido) {
 
     const data = await res.json();
     if (data.success) {
-        window.location.href = 'partidosUsuario.html';
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
+        msgDiv.innerText = data.message;
+        setTimeout(() => {
+        window.location.reload(); 
+        }, 1000);// Recarga la página para reflejar los cambios
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
@@ -429,12 +442,22 @@ async function crearPartidoAdmin() {
 
     const data = await res.json();
     if (data.success) {
-        window.location.href = 'partidos(admin).html';
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+         setTimeout(() => {
+        window.location.href = 'Partidos(admin).html';
+    }, 1000);
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
         msgDiv.innerText = data.message;
     }
 }
+
 window.eliminarPartido = eliminarPartido;
 window.salirPartido = salirPartido;
+window.crearPartidoAdmin = crearPartidoAdmin;
+window.modificarPartido = modificarPartido;
+window.fichaje = fichaje;
+window.crearPartido = crearPartido;

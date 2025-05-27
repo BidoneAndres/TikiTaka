@@ -56,6 +56,7 @@
 </div>    
 <div id="message" style="display:none;"></div>   
 
+<!-- Ubiquen bien este boton -->
 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearModal">
   Crear Partido
 </button>
@@ -67,7 +68,7 @@
         <h1 class="modal-title fs-5">Crear Nuevo Partido</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
-      <form action="/crearPartidoAdmin" method="POST">
+      <form id = "crearPartido">
       <div class="modal-body">
         <input id="username" class="form-control mb-2" name = "username" placeholder="Nombre de usuario (Ej: DiegoMaradona123)" required />
         <input id="jugadores" class="form-control mb-2" name = "jugadores" placeholder="Cantidad (Ej: 12/14)" required />
@@ -91,15 +92,16 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
-        <input id="editNombre" class="form-control mb-2" />
-        <input id="editJugadores" class="form-control mb-2" />
-        <input id="editDia" type="date" class="form-control mb-2" />
-        <input id="editHora" type="time" class="form-control mb-2" />
+      <form id = "modificarPartido">
+        <input id="jugadores" class="form-control mb-2" />
+        <input id="fecha" type="date" class="form-control mb-2" />
+        <input id="horario" type="time" class="form-control mb-2" />
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button id="guardarCambios" type="button" class="btn btn-success">Guardar Cambios</button>
+        <button id="guardarCambios" type="submit" class="btn btn-success">Guardar Cambios</button>
       </div>
+    </form>
     </div>
   </div>
 </div>
@@ -112,6 +114,14 @@
 <script src="js/script.js"></script>
 <script>
     mostrarPartidos();
+    document.getElementById('crearPartido').addEventListener('submit', function(event) {
+      event.preventDefault();
+      crearPartidoAdmin();
+    });
+    document.getElementById('modificarPartido').addEventListener('submit', function(event) {
+      event.preventDefault();
+      modificarPartido();
+    });
 </script>
 </body>
 </html>

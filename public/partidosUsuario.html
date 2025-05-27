@@ -67,35 +67,32 @@
     <div class="d-flex flex-wrap justify-content-center" id="partidosList"></div>
 </div>
 
-        <div class="row d-flex align-text-center justify-content-end">
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearModal">
+  Crear Partido
+</button>
 
-            <a class="btn p-0 display-flex justify-content-center align-items-center" data-bs-toggle="collapse" id="crear" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample" style="font-size: 30px; height:40px; width: 40px; color:white; position: fixed; bottom: 10px; right: 10px; background-color:rgba(82, 131, 71, 1);">+
-            </a>
-
-                <div class="collapse" id="collapseExample">
-                <div class="card card-body" style="width: 500px; position: fixed; bottom: 10px; right: 70px; background-color:rgba(82, 131, 71, 1); color: white; z-index: 9999;">
-                <form id = "crearPartido">
-                    <label for="fecha">Selecciona una fecha:</label>
-                    <input type="date" class="form-control" id="fecha" name="fecha" required>
-                    <label for="hora">Selecciona una hora:</label>
-                    <input type="time" class="form-control" id="horario" name="horario" required>
-                    <p>Hora seleccionada: <span id="horaSeleccionada"></span></p>
-                    <label for="customRange2">Cantidad de Jugadores</label>
-                    <span id="valorSeleccionado">7</span> 
-                    <input id="jugadores" type="range" class="form-range" min="1" max="14" oninput="actualizarValor(this.value)" name = "jugadores" value="7" style="width: 100%;" required>
-                    <script>
-                    function actualizarValor(valor) {
-                        document.getElementById("valorSeleccionado").textContent = valor;
-                    }
-                    </script>
-                    <button type="submit" class="btn btn-light">crear!</button>
-                </form>
-                </div>
-                </div>
-                <div role="alert" id="message" style="display:none;">
-            <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Warning:" style="display: none;"><use xlink:href="#exclamation-triangle-fill"/></svg>
-        </div>
-        </div>         
+<div class="modal fade" id="crearModal" tabindex="-1" aria-labelledby="crearModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5">Crear Nuevo Partido</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form id = "crearPartido">
+      <div class="modal-body">
+        <input id="jugadores" class="form-control mb-2" name = "jugadores" placeholder="Cantidad (Ej: 12/14)" required />
+        <input id="fecha" type="date" class="form-control mb-2" name = "fecha" required />
+        <input id="horario" type="time" class="form-control mb-2" name = "horario" required />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="btnCrearPartido" type="submit" class="btn btn-success">Crear</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>  
+<div id="message" style="display:none;"></div>
         <script src="js/script.js"></script>
         <script>
             partidosAjenos();

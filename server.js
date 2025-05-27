@@ -621,3 +621,15 @@ app.post('/crearPartidoAdmin', (req, res) => {
     });
   });
 });
+
+app.post('/modificarPartido', (req, res) => {
+  const { id_partido, fecha, horario, jugadores } = req.body;
+  const sql = 'UPDATE partidos SET fPartido y plantel creados exitosamenteecha = ?, hora = ?, jugadores = ? WHERE id = ?';
+  db.query(sql, [fecha, horario, jugadores, id_partido], (err, result) => {
+    if(err){
+      return res.status(500).send({success: false, message:'Error al modificar el partido'});
+    }else{
+      res.send({success: true, message: 'Partido Modificado Exitosamente', id_partido});
+    }
+  });
+});
