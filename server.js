@@ -206,30 +206,90 @@ app.post('/crearPartido', (req, res) => {
 });
 
 app.get('/partidosAjenos', (req, res) => {
-  db.query('SELECT * FROM partidos WHERE owner != ?;', [userLoggedIn], (err, result) => {
+  db.query('SELECT * FROM partidos WHERE owner != ?;', [userLoggedIn], async (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Error al obtener los partidos');
     }
     if (!result || result.length === 0) {
-      return res.send({ success: true, partidos: [] }); // No hay partidos
+      return res.send({ success: true, partidos: [] });
     }
-    console.log('Partidos obtenidos:', result);
-    res.send({success: true, partidos: result});
+
+    // Filtrar partidos donde el usuario NO está fichado
+    const partidosFiltrados = [];
+    for (const partido of result) {
+      const id_partido = partido.id;
+      // Obtener cantidad de jugadores para saber cuántas columnas hay
+      const maxJugadores = partido.jugadores;
+      const campos = Array.from({length: maxJugadores}, (_, i) => `id_jugador${i+1}`).join(', ');
+      const sql = `SELECT ${campos} FROM plantel_${id_partido} WHERE id_partido = ? LIMIT 1`;
+      try {
+        const [rows] = await new Promise((resolve, reject) => {
+          db.query(sql, [id_partido], (err, rows) => {
+            if (err) reject(err);
+            else resolve([rows]);
+          });
+        });
+        let fichado = false;
+        if (rows.length > 0) {
+          for (let i = 1; i <= maxJugadores; i++) {
+            if (Number(rows[0][`id_jugador${i}`]) == Number(userLoggedIn)) {
+              fichado = true;
+              break;
+            }
+          }
+        }
+        if (!fichado) partidosFiltrados.push(partido);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    res.send({ success: true, partidos: partidosFiltrados });
   });
 });
 
-app.get('/partidosUsuario', (req, res) => {
-  db.query('SELECT * FROM partidos WHERE owner = ?;', [userLoggedIn], (err, result) => {
+app.get('/partidosPropios', (req, res) => {
+  db.query('SELECT * FROM partidos', async (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Error al obtener los partidos');
     }
     if (!result || result.length === 0) {
-      return res.send({ success: true, partidos: [] }); // No hay partidos
+      return res.send({ success: true, partidos: [] });
     }
-    console.log('Partidos obtenidos:', result);
-    res.send({success: true, partidos: result});
+
+    const partidosFichados = [];
+    for (const partido of result) {
+      const id_partido = partido.id;
+      const maxJugadores = partido.jugadores;
+      const campos = Array.from({length: maxJugadores}, (_, i) => `id_jugador${i+1}`).join(', ');
+      const sql = `SELECT ${campos} FROM plantel_${id_partido} WHERE id_partido = ? LIMIT 1`;
+      try {
+        const [rows] = await new Promise((resolve, reject) => {
+          db.query(sql, [id_partido], (err, rows) => {
+            if (err) {
+              // Si la tabla no existe, ignora este partido
+              if (err.code === 'ER_NO_SUCH_TABLE') return resolve([[]]);
+              return reject(err);
+            }
+            else resolve([rows]);
+          });
+        });
+        let fichado = false;
+        if (rows.length > 0) {
+          for (let i = 1; i <= maxJugadores; i++) {
+            if (rows[0][`id_jugador${i}`] == userLoggedIn) {
+              fichado = true;
+              break;
+            }
+          }
+        }
+        if (fichado) partidosFichados.push(partido);
+      } catch (e) {
+        console.error('Error en partido id', id_partido, e);
+      }
+    }
+    res.send({ success: true, partidos: partidosFichados });
   });
 });
 
@@ -334,36 +394,158 @@ app.post('/fichaje', (req, res) => {
     return res.status(401).send('Usuario no logueado');
   }
 
-  // Verificar si el partido existe
-  const sqlPartido = 'SELECT * FROM partidos WHERE id = ?';
-  db.query(sqlPartido, [id_partido], (err, result) => {
+  // 1. Obtener la cantidad máxima de jugadores
+  db.query('SELECT jugadores FROM partidos WHERE id = ?', [id_partido], (err, result) => {
+    if (err || result.length === 0) {
+      return res.status(500).send({success: false, message: 'Partido no encontrado'});
+    }
+    const maxJugadores = result[0].jugadores;
+
+    // 2. Buscar el primer campo id_jugadorX que esté en NULL
+    const campos = Array.from({length: maxJugadores}, (_, i) => `id_jugador${i+1}`).join(', ');
+    db.query(`SELECT id, ${campos} FROM plantel_${id_partido} WHERE id_partido = ? LIMIT 1`, [id_partido], (err, rows) => {
+      if (err || rows.length === 0) {
+        return res.status(500).send({success: false, message: 'No se pudo obtener el plantel'});
+      }
+      const row = rows[0];
+      let campoLibre = null;
+      for (let i = 1; i <= maxJugadores; i++) {
+        if (row[`id_jugador${i}`] === null) {
+          campoLibre = `id_jugador${i}`;
+          break;
+        }
+        // Evitar que el usuario se fiche dos veces
+        if (row[`id_jugador${i}`] === userLoggedIn) {
+          return res.send({success: false, message: 'Ya estás fichado en este partido'});
+        }
+      }
+      if (!campoLibre) {
+        return res.send({success: false, message: 'No hay espacios disponibles'});
+      }
+
+      // 3. Hacer el UPDATE para fichar al usuario en el primer campo libre
+      db.query(
+        `UPDATE plantel_${id_partido} SET ${campoLibre} = ? WHERE id = ?`,
+        [userLoggedIn, row.id],
+        (err) => {
+          if (err) {
+            return res.status(500).send({success: false, message: 'Error al fichar en el partido'});
+          }
+          res.send({success: true, message: 'Fichaje exitoso'});
+        }
+      );
+    });
+  });
+});
+
+app.get('/getEspaciosDisponibles/:id_partido', (req, res) => {
+  const id_partido = req.params.id_partido;
+  db.query('SELECT jugadores FROM partidos WHERE id = ?', [id_partido], (err, result) => {
     if (err) {
       console.error(err);
-      return res.status(500).send('Error al verificar el partido');
+      return res.status(500).send({success: false, message: 'Error al obtener el partido'});
     }
     if (result.length === 0) {
-      return res.status(404).send('Partido no encontrado');
+      return res.status(404).send({success: false, message: 'Partido no encontrado'});
     }
+    const maxJugadores = result[0].jugadores;
 
-    // Verificar si el usuario ya está fichado
-    const sqlFichaje = `SELECT * FROM plantel_${id_partido} WHERE id_jugador1 = ?`;
-    db.query(sqlFichaje, [userLoggedIn], (err, result) => {
+    // 2. Contar cuántos jugadores ya están fichados (columnas id_jugadorX no nulas)
+    const sqlCount = `
+      SELECT 
+        (${Array.from({length: maxJugadores}, (_, i) => `IF(id_jugador${i+1} IS NOT NULL, 1, 0)`).join(' + ')}) AS inscriptos
+      FROM plantel_${id_partido}
+      LIMIT 1
+    `;
+    db.query(sqlCount, (err, rows) => {
       if (err) {
         console.error(err);
-        return res.status(500).send('Error al verificar el fichaje');
+        return res.status(500).send({success: false, message: 'Error al contar inscriptos'});
       }
-      if (result.length > 0) {
-        return res.send({success: false, message: 'Ya estás fichado en este partido'});
-      }
+      const inscriptos = rows.length > 0 ? rows[0].inscriptos : 0;
+      const espacios = maxJugadores - inscriptos;
+      res.send({success: true, espacios, inscriptos, maxJugadores});
+    });
+  });
+});
 
-      // Insertar el usuario en la tabla plantel del partido
-      const insertSql = `INSERT INTO plantel_${id_partido} (id_partido, id_jugador1) VALUES (?, ?)`;
-      db.query(insertSql, [id_partido, userLoggedIn], (err) => {
+
+app.post('/eliminarPartido', (req, res) => {
+  const { id_partido } = req.body;
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+
+  db.query('SELECT owner FROM partidos WHERE id = ?', [id_partido], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({success: false, message: 'Error al verificar el owner del partido'});
+    }
+    if (result.length === 0 || result[0].owner !== userLoggedIn) {
+      return res.status(403).send({success: false, message: 'No tienes permiso para eliminar este partido'});
+    }
+
+    // Primero elimina la tabla plantel
+    db.query(`DROP TABLE IF EXISTS plantel_${id_partido}`, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({success: false, message: 'Error al eliminar la tabla de plantel'});
+      }
+      // Luego elimina el partido
+      db.query('DELETE FROM partidos WHERE id = ?', [id_partido], (err) => {
         if (err) {
           console.error(err);
-          return res.status(500).send('Error al fichar en el partido');
+          return res.status(500).send({success: false, message: 'Error al eliminar el partido'});
         }
-        res.send({success: true, message: 'Fichaje exitoso'});
+        res.send({success: true, message: 'Partido eliminado exitosamente'});
+      });
+    });
+  });
+});
+
+app.post('/salirPartido', (req, res) => {
+  const { id_partido } = req.body;
+  if (!userLoggedIn) {
+    return res.status(401).send('Usuario no logueado');
+  }
+
+  // 1. Obtener la cantidad de jugadores del partido
+  db.query('SELECT jugadores FROM partidos WHERE id = ?', [id_partido], (err, result) => {
+    if (err || result.length === 0) {
+      return res.status(404).send({success: false, message: 'Partido no encontrado'});
+    }
+    const maxJugadores = result[0].jugadores;
+
+    // 2. Buscar al usuario en el plantel
+    db.query(`SELECT * FROM plantel_${id_partido} WHERE id_partido = ?`, [id_partido], (err, rows) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({success: false, message: 'Error al verificar el fichaje'});
+      }
+      if (rows.length === 0) {
+        return res.status(404).send({success: false, message: 'Plantel no encontrado'});
+      }
+
+      // Buscar el primer campo donde el usuario esté fichado
+      let campoFichado = null;
+      for (let i = 1; i <= maxJugadores; i++) {
+        if (Number(rows[0][`id_jugador${i}`]) === Number(userLoggedIn)) {
+          campoFichado = `id_jugador${i}`;
+          break;
+        }
+      }
+
+      if (!campoFichado) {
+        return res.status(400).send({success: false, message: 'No estás fichado en este partido'});
+      }
+
+      // Actualizar el campo del usuario a NULL
+      db.query(`UPDATE plantel_${id_partido} SET ${campoFichado} = NULL WHERE id_partido = ?`, [id_partido], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send({success: false, message: 'Error al salir del partido'});
+        }
+        res.send({success: true, message: 'Has salido del partido exitosamente'});
       });
     });
   });
