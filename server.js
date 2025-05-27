@@ -550,3 +550,74 @@ app.post('/salirPartido', (req, res) => {
     });
   });
 });
+
+app.post('/crearPartidoAdmin', (req, res) => {
+  const {username, jugadores, fecha, horario } = req.body;
+  db.query('SELECT id FROM usuarios WHERE username = ?', [username], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({success: false, message:'Error al buscar el usuario'});
+    }
+    if (result.length === 0) {
+      return res.status(404).send({success: false, message:'Usuario no encontrado'});
+    }
+    const owner = result[0].id; // Asignar el ID del usuario encontrado
+
+    const createTable = `
+      CREATE TABLE IF NOT EXISTS partidos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        owner INT NOT NULL,
+        jugadores INT NOT NULL,
+        fecha DATE NOT NULL,
+        hora TIME NOT NULL,
+        FOREIGN KEY (owner) REFERENCES usuarios(id)
+      )
+    `;
+    db.query(createTable, (err) => {
+      if (err) throw err;
+
+      const sqlInsert = 'INSERT INTO partidos (owner, jugadores, fecha, hora) VALUES (?, ?, ?, ?)';
+      db.query(sqlInsert, [owner, jugadores, fecha, horario], (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send({success: false, message:'Error al crear el partido'});
+        }
+        const id_partido = result.insertId;
+
+        let jugadorFields = '';
+        for (let i = 1; i <= jugadores; i++) {
+          jugadorFields += `id_jugador${i} INT${i === 1 ? ' NOT NULL' : ''},\n`;
+        }
+
+        // Crear tabla plantel con el id correcto
+        const createTablePlantel = `
+          CREATE TABLE IF NOT EXISTS plantel_${id_partido}(
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_partido INT NOT NULL,
+            ${jugadorFields}
+            FOREIGN KEY (id_partido) REFERENCES partidos(id)
+          )
+        `;
+        db.query(createTablePlantel, (err) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).send({success: false, message:'Error al crear la tabla de jugadores'});
+          }
+
+          // Insertar owner en la tabla plantel
+          const insertOwner = `
+            INSERT INTO plantel_${id_partido} (id_partido, id_jugador1) VALUES (?,?)
+          `;
+          db.query(insertOwner, [id_partido, owner], (err) => {
+            if (err) {
+              console.error(err);
+              return res.status(500).send({success: false, message:'Error al insertar el owner en la tabla de jugadores'});
+            }
+            // Solo aquí respondemos al cliente
+            res.send({success: true, message: 'Partido y plantel creados exitosamente', id_partido});
+          });
+        });
+      });
+    });
+  });
+});

@@ -16,7 +16,12 @@ async function login() {
     const data = await res.json();
     userLoggedIn = data.username; // Guarda el nombre de usuario del usuario logueado
     if (data.success) {
-        window.location.href = 'partidosUsuario.html';
+        if( userLoggedIn === 'admin') {
+            window.location.href = 'Dashboard(admin).html';
+        }else{
+            window.location.href = 'partidosUsuario.html';
+        }
+        
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
@@ -206,7 +211,7 @@ async function mostrarPartidos(){
     partidosList.innerHTML = '<p style="color:#edcd3d;">Cargando Partidos...</p>';
 
     try {
-        const res = await fetch('http://localhost:3000/mostrarPartidos');
+        const res = await fetch('http://localhost:3000/partidos');
         const data = await res.json();
         // CORRIGE ESTA CONDICIÓN:
         if (!data.success || !data.partidos || data.partidos.length === 0) {
@@ -238,7 +243,8 @@ for (const partido of data.partidos) {
                 <p class="card-text">Jugadores: ${cantJugadores}/14</p>
                 <p class="card-text">Dia: ${partido.fecha}</p>
                 <p class="card-text">Hora: ${partido.hora}</p>
-                <button type="submit" class="btn btn-primary">Entrar</button>
+                <button class="btn btn-editar btn-sm" onclick="modificarPartido(${partido.id})">Editar</button>
+                <button class="btn btn-eliminar btn-sm" onclick="eliminarPartido(${partido.id})">Eliminar</button>
             </form>
             </div>
         </div>`;
@@ -396,6 +402,34 @@ async function salirPartido(id_partido) {
         setTimeout(() => {
             window.location.href = 'partidosUsuario.html';
         }, 2000); // Redirige después de 2 segundos
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
+}
+
+async function crearPartidoAdmin() {
+    const username = document.getElementById('username').value;
+    const fecha = document.getElementById('fecha').value;
+    const horario = document.getElementById('horario').value;
+    const jugadores = document.getElementById('jugadores').value;
+
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.className = "";
+
+    const res = await fetch('http://localhost:3000/crearPartidoAdmin', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, fecha, horario, jugadores })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = 'partidos(admin).html';
     } else {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
