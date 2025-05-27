@@ -12,15 +12,15 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
+
         <div class="col-3 sidebar d-flex flex-column align-items-center">
             <img src="img/logo.png" alt="Logo" width="80">
             <h3 class="mt-3">Tiki Taka</h3>
 
-            <button id="boton" onclick="location.href='jugador.html'">Jugador</button>
+            <button id="boton" onclick="location.href='editarPerfil.html'">Jugador</button>
             <button id="boton" onclick="location.href='historial.html'">Historial</button>
             <button id="boton" onclick="location.href='equipo.html'">Equipo</button>
-            <button id="boton" onclick="location.href='partidos.html'">Partidos</button>
+            <button id="boton" onclick="location.href='partidosUsuario.html'">Partidos</button>
 
             <div class="cerrar-sesion">
                 Asistencia <br>
@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <!-- Formulario de creación -->
+        
         <div class="col-9 form-section">
             <h2>Crear Partido</h2>
             <form action="/crearpartido" method="POST" class="w-75 mx-auto">
