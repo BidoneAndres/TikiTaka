@@ -636,3 +636,43 @@ app.post('/modificarPartido', (req, res) => {
     }
   });
 });
+
+app.get('/cargarUsers', (req, res) => {
+  db.query('SELECT * FROM usuarios;', (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error al obtener los usuarios');
+    }
+    if (!result || result.length === 0) {
+      return res.send({ success: true, usuarios: [] }); // No hay partidos
+    }
+    console.log('Partidos obtenidos:', result);
+    res.send({success: true, usuarios: result});
+  });
+});
+
+app.post('/modificarUserAdmin', (req, res) => {
+  const {user, name, lastname, birthdate, email} = req.body;
+  const sql = 'UPDATE usuarios SET username = ?, name = ?, lastname = ?, birthdate = ?, email = ? WHERE username = ?';
+  db.query(sql, [user, name, lastname, birthdate, email, user], (err, result)=> {
+    if(err){
+      return res.status(500).send({success: false, message:'Error al modificar el usuario'});
+    }else{
+      res.send({success: true, message: 'Usuario Modificado Exitosamente'});
+    }
+  });
+});
+
+app.post('/eliminarUser', (req, res) => {
+  const {id} = req.body; 
+  const sql = 'DELETE FROM usuarios WHERE id = ?';
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({ success: false, message: 'Error al eliminar el usuario' });
+    }else{
+      return res.send({ success: true, message: 'Usuario eliminado exitosamente' });
+    }
+    
+  });
+});

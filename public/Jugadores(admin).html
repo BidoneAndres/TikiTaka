@@ -66,20 +66,7 @@
         <th>Acciones</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>futbol123</td>
-        <td>Juan</td>
-        <td>Pérez</td>
-        <td>1995-03-12</td>
-        <td>juanperez@gmail.com</td>
-        <td>
-          <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar"
-            onclick="cargarDatosEditar('futbol123', 'Juan', 'Pérez', '1995-03-12', 'juanperez@gmail.com')">Editar</button>
-          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar"
-            onclick="document.getElementById('usuarioEliminar').innerText = 'futbol123'">Eliminar</button>
-        </td>
-      </tr>
+    <tbody id = "usuarios">
     </tbody>
   </table>
 </div>
@@ -88,7 +75,7 @@
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form onsubmit="guardarCambios(); return false;">
+      <form id = "modificarUser">
         <div class="modal-header">
           <h5 class="modal-title" id="modalEditarLabel">Editar Jugador</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -96,23 +83,23 @@
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Usuario</label>
-            <input type="text" class="form-control" id="editUsuario" disabled>
+            <input type="text" class="form-control" id="user" name="user" disabled>
           </div>
           <div class="mb-3">
             <label class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="editNombre">
+            <input type="text" class="form-control" id="name" name="name">
           </div>
           <div class="mb-3">
             <label class="form-label">Apellido</label>
-            <input type="text" class="form-control" id="editApellido">
+            <input type="text" class="form-control" id="lastname" name="lastname">
           </div>
           <div class="mb-3">
             <label class="form-label">Fecha de Nacimiento</label>
-            <input type="date" class="form-control" id="editNacimiento">
+            <input type="date" class="form-control" id="birthdate" name="birthdate">
           </div>
           <div class="mb-3">
             <label class="form-label">Mail</label>
-            <input type="email" class="form-control" id="editMail">
+            <input type="email" class="form-control" id="email" name="email">
           </div>
         </div>
         <div class="modal-footer">
@@ -136,33 +123,41 @@
         ¿Estás seguro que deseas eliminar al jugador <strong id="usuarioEliminar"></strong>?
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-danger">Eliminar</button>
+        <button type="button" class="btn btn-danger" onclick="confirmarEliminarUser()">Eliminar</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
       </div>
     </div>
   </div>
 </div>
-
+<div id="message" style="display:none;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  function cargarDatosEditar(usuario, nombre, apellido, nacimiento, mail) {
-    document.getElementById("editUsuario").value = usuario;
-    document.getElementById("editNombre").value = nombre;
-    document.getElementById("editApellido").value = apellido;
-    document.getElementById("editNacimiento").value = nacimiento;
-    document.getElementById("editMail").value = mail;
-  }
+  function cargarDatosEditar(username, name, lastname, birthdate, email) {
+    document.getElementById("user").value = username;
+    document.getElementById("name").value = name;
+    document.getElementById("lastname").value = lastname;
+    let fechaFormateada = birthdate;
+    if (birthdate && birthdate.includes('T')) {
+    // Si viene como 'YYYY-MM-DDTHH:mm:ss.000Z'
+      fechaFormateada = birthdate.split('T')[0];
+      } else if (birthdate && birthdate.includes('/')) {
+    // Si viene como 'DD/MM/YYYY'
+      const [d, m, y] = birthdate.split('/');
+      fechaFormateada = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    document.getElementById("birthdate").value = fechaFormateada;
+    document.getElementById("email").value = email;
 
-  function guardarCambios() {
-    const nombre = document.getElementById("editNombre").value;
-    const apellido = document.getElementById("editApellido").value;
-    const mail = document.getElementById("editMail").value;
-
-    alert("Cambios guardados:\nNombre: " + nombre + "\nApellido: " + apellido + "\nMail: " + mail);
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditar'));
-    modal.hide();
   }
+</script>
+<script src = "js/script.js"></script>
+<script>
+  cargarUsers();
+  document.getElementById('modificarUser').addEventListener('submit', function(event) {
+      event.preventDefault();
+      modificarUser();
+    });
 </script>
 </body>
 </html>

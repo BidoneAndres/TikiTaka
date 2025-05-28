@@ -61,6 +61,28 @@
     </div>
 
 </div>
+
+<div class="modal fade" id="editarModal" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5">Editar Partido</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+      <form id = "modificarPartido">
+        <input id="jugadores" class="form-control mb-2" />
+        <input id="fecha" type="date" class="form-control mb-2" />
+        <input id="horario" type="time" class="form-control mb-2" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="guardarCambios" type="submit" class="btn btn-success">Guardar Cambios</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
     
 <div class="container d-flex justify-content-center">
     <div class="d-flex flex-wrap justify-content-center" id="partidosList"></div>
@@ -69,6 +91,10 @@
 <script src="js/script.js"></script>
 <script>
     partidosUsuario();
+    document.getElementById('modificarPartido').addEventListener('submit', function(event) {
+      event.preventDefault();
+      modificarPartido();
+    });
 </script>
 </body>
 </html>

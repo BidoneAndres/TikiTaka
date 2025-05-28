@@ -180,7 +180,7 @@ async function partidosUsuario(){
             let botones = '';
             if (partido.owner === userLoggedInId) {
                 botones = `
-                    <button class="btn btn-editar btn-sm" onclick="modificarPartido(${partido.id})">Editar</button>
+                    <button type="button" class="btn btn-editar btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal" onclick="abrirEditarPartido(${partido.id}, '${partido.fecha}', '${partido.hora}', ${partido.jugadores})">Editar</button>
                     <button class="btn btn-eliminar btn-sm" onclick="eliminarPartido(${partido.id})">Eliminar</button>
                 `;
             } else {
@@ -455,6 +455,125 @@ async function crearPartidoAdmin() {
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
         msgDiv.innerText = data.message;
     }
+}
+
+async function cargarUsers(){
+    const usuariosList = document.getElementById('usuarios');
+
+    try {
+        const res = await fetch('http://localhost:3000/cargarUsers');
+        const data = await res.json();
+        if (!data.success || !data.usuarios || data.usuarios.length === 0) {
+            usuariosList.innerHTML = '<p style="color:#edcd3d;">No hay Usuarios.</p>';
+            return;
+        }
+
+        usuariosList.innerHTML = '';
+        for (const usuario of data.usuarios) {
+            const card = document.createElement('tr');
+            card.innerHTML += `
+            <td>${usuario.username}</td>
+            <td>${usuario.name}</td>
+            <td>${usuario.lastname}</td>
+            <td>${usuario.birthdate}</td>
+            <td>${usuario.email}</td>
+            <td>
+             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar"
+                onclick="cargarDatosEditar('${usuario.username}', '${usuario.name}', '${usuario.lastname}', '${usuario.birthdate}', '${usuario.email}')">Editar</button>
+            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar"
+                onclick="prepararEliminarUser(${usuario.id}, '${usuario.username}')">Eliminar</button>
+            </td>
+                `;
+            usuariosList.appendChild(card);
+        }
+    } catch (error) {
+        console.error('Error al cargar los partidos:', error);
+        usuariosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
+    }
+}
+
+let idUsuarioAEliminar = null;
+
+function prepararEliminarUser(id, username) {
+    idUsuarioAEliminar = id;
+    document.getElementById('usuarioEliminar').innerText = username;
+}
+
+function confirmarEliminarUser() {
+    if (idUsuarioAEliminar !== null) {
+        eliminarUser(idUsuarioAEliminar);
+        idUsuarioAEliminar = null;
+    }
+}
+
+async function modificarUser() {
+
+    const user = document.getElementById('user').value;
+    const name = document.getElementById('name').value;
+    const lastname = document.getElementById('lastname').value;
+    const email = document.getElementById('email').value;
+    const birthdate = document.getElementById('birthdate').value;
+
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.className = "";
+
+    const res = await fetch('http://localhost:3000/modificarUserAdmin', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user,name, lastname, email, birthdate})
+    });
+
+    const data = res.json();
+    if (data.success) {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
+        msgDiv.innerText = data.message;
+        setTimeout(() => {
+            msgDiv.style.display = 'block';
+            msgDiv.className = "alert alert-warning d-flex align-items-center text-center";
+            msgDiv.innerText = data.message;
+            window.location.reload();
+        }, 1000); 
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
+}
+
+async function eliminarUser(id){
+
+    const msgDiv = document.getElementById('message');
+    msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
+    msgDiv.className = "";
+
+    const res = await fetch('http://localhost:3000/eliminarUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({id})
+    });
+    const data = res.json();
+    if (data.success) {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
+        msgDiv.innerText = data.message;
+        setTimeout(() => {
+            msgDiv.style.display = 'block';
+            msgDiv.className = "alert alert-warning d-flex align-items-center text-center";
+            msgDiv.innerText = data.message;
+            window.location.reload();
+        }, 1000); 
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
+        msgDiv.innerText = data.message;
+    }
+
 }
 
 window.eliminarPartido = eliminarPartido;
