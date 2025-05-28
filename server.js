@@ -88,27 +88,29 @@ app.get('/', (req, res) => {
 
 const bcrypt = require('bcrypt'); //libreria para encriptar contraseñas
 let userLoggedIn = 0;
+let usernameLoggedIn = '';
 //Ruta para el login de usuarios
 app.post('/login', (req, res) => {
-    const {username, password} = req.body;
+  const {username, password} = req.body;
 
-    const sql = 'SELECT * FROM usuarios WHERE username = ?';
-    db.query(sql, [username], async (err, result) => {
-        if (err) return res.status(500).send('Error en la conexion');
-        if(result.length > 0) {
-            const user = result[0];
-            const match = await bcrypt.compare(password, user.password);
-            if (match) {
-                userLoggedIn = result[0].id // Guardar el ID del usuario logueado
-                res.send({success: true, message: 'Login exitoso'});
-                console.log(userLoggedIn);
-            } else {
-                res.send({success: false, message: 'Usuario o contraseña incorrectos'});
-            }
+  const sql = 'SELECT * FROM usuarios WHERE username = ?';
+  db.query(sql, [username], async (err, result) => {
+    if (err) return res.status(500).send('Error en la conexion');
+      if(result.length > 0) {
+        const user = result[0];
+        const match = await bcrypt.compare(password, user.password);
+        if (match) {
+          userLoggedIn = result[0].id 
+          usernameLoggedIn = result[0].username;
+          res.send({success: true, message: 'Login exitoso', username: result[0].username});
+          console.log(userLoggedIn);
+          } else {
+            res.send({success: false, message: 'Usuario o contraseña incorrectos'});
+          }
         } else {
             res.send({success: false, message: 'Usuario o contraseña incorrectos'});
         }
-    });
+  });
 });
 
 //Ruta para el registro de usuarios
@@ -471,7 +473,7 @@ app.get('/getEspaciosDisponibles/:id_partido', (req, res) => {
 
 
 app.post('/eliminarPartido', (req, res) => {
-  const { id_partido } = req.body;
+  const { id_partido, usernamelog } = req.body;
   if (!userLoggedIn) {
     return res.status(401).send('Usuario no logueado');
   }
@@ -481,7 +483,8 @@ app.post('/eliminarPartido', (req, res) => {
       console.error(err);
       return res.status(500).send({success: false, message: 'Error al verificar el owner del partido'});
     }
-    if (result.length === 0 || result[0].owner !== userLoggedIn) {
+    // Solo el owner o el admin pueden eliminar
+    if (result.length === 0 || (result[0].owner !== userLoggedIn && usernameLoggedIn !== 'admin')) {
       return res.status(403).send({success: false, message: 'No tienes permiso para eliminar este partido'});
     }
 
@@ -624,7 +627,7 @@ app.post('/crearPartidoAdmin', (req, res) => {
 
 app.post('/modificarPartido', (req, res) => {
   const { id_partido, fecha, horario, jugadores } = req.body;
-  const sql = 'UPDATE partidos SET fPartido y plantel creados exitosamenteecha = ?, hora = ?, jugadores = ? WHERE id = ?';
+  const sql = 'UPDATE partidos SET fecha = ?, hora = ?, jugadores = ? WHERE id = ?';
   db.query(sql, [fecha, horario, jugadores, id_partido], (err, result) => {
     if(err){
       return res.status(500).send({success: false, message:'Error al modificar el partido'});

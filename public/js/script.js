@@ -1,4 +1,5 @@
-let userLoggedIn;
+let usernamelog='';
+
 async function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -14,9 +15,10 @@ async function login() {
         body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    userLoggedIn = data.username; // Guarda el nombre de usuario del usuario logueado
+    usernamelog = data.username; // Guarda el nombre de usuario del usuario logueado
+    console.log(usernamelog);
     if (data.success) {
-        if( userLoggedIn === 'admin') {
+        if( usernamelog === 'admin') {
             window.location.href = 'Dashboard(admin).html';
         }else{
             window.location.href = 'partidosUsuario.html';
@@ -98,42 +100,42 @@ async function partidosAjenos(){
         const res = await fetch('http://localhost:3000/partidosAjenos');
         const data = await res.json();
         // CORRIGE ESTA CONDICIÓN:
-        if (!data.success || !data.partidos || data.partidos.length === 0) {
-            partidosList.innerHTML = '<p style="color:#edcd3d;">No hay partidos.</p>';
-            return;
-        }
+            if (!data.success || !data.partidos || data.partidos.length === 0) {
+                partidosList.innerHTML = '<p style="color:#edcd3d;">No hay partidos.</p>';
+                return;
+            }
 
-        partidosList.innerHTML = '';
-for (const partido of data.partidos) {
-    const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
-    const dataUsername = await resUsername.json();
-    if (!dataUsername.success) {
-        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
-        return;
-    }
-    const username = dataUsername.username;
-    const card = document.createElement('div');
-    card.className="m-3";
+            partidosList.innerHTML = '';
+            for (const partido of data.partidos) {
+                const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
+            const dataUsername = await resUsername.json();
+            if (!dataUsername.success) {
+                partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
+                return;
+            }
+            const username = dataUsername.username;
+            const card = document.createElement('div');
+            card.className="m-3";
     
-    const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
-    const dataJugadores = await resJugadores.json();
-    const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
-    card.innerHTML += `
-        <div class="card" style="width: 18rem;">
-            <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
-            <div class="card-body">
-            <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
-                <input type="hidden" id="id_partido" value="${partido.id}">
-                <h5 class="card-title">${username}</h5>
-                <p class="card-text">Jugadores: ${cantJugadores}/14</p>
-                <p class="card-text">Dia: ${partido.fecha}</p>
-                <p class="card-text">Hora: ${partido.hora}</p>
-                <button type="submit" class="btn btn-primary">Entrar</button>
-            </form>
-            </div>
-        </div>`;
-    partidosList.appendChild(card);
-}
+            const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
+            const dataJugadores = await resJugadores.json();
+            const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
+            card.innerHTML += `
+                <div class="card" style="width: 18rem;">
+                    <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
+                            <input type="hidden" id="id_partido" value="${partido.id}">
+                            <h5 class="card-title">${username}</h5>
+                            <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                            <p class="card-text">Dia: ${partido.fecha}</p>
+                            <p class="card-text">Hora: ${partido.hora}</p>
+                            <button type="submit" class="btn btn-primary">Entrar</button>
+                        </form>
+          href = 'misPartidos.html'          </div>
+                </div>`;
+            partidosList.appendChild(card);
+        }
     } catch (error) {
         console.error('Error al cargar los partidos:', error);
         partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
@@ -220,36 +222,36 @@ async function mostrarPartidos(){
         }
 
         partidosList.innerHTML = '';
-for (const partido of data.partidos) {
-    const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
-    const dataUsername = await resUsername.json();
-    if (!dataUsername.success) {
-        partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
-        return;
-    }
-    const username = dataUsername.username;
-    const card = document.createElement('div');
-    card.className="m-3";
-    const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
-    const dataJugadores = await resJugadores.json();
-    const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
-    card.innerHTML += `
-        <div class="card" style="width: 18rem;">
-            <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
-            <div class="card-body">
-            <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
-                <input type="hidden" id="id_partido" value="${partido.id}">
-                <h5 class="card-title">${username}</h5>
-                <p class="card-text">Jugadores: ${cantJugadores}/14</p>
-                <p class="card-text">Dia: ${partido.fecha}</p>
-                <p class="card-text">Hora: ${partido.hora}</p>
-                <button class="btn btn-editar btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal" onclick="abrirEditarPartido(${partido.id}, '${partido.fecha}', '${partido.hora}', ${partido.jugadores})">Editar</button>
-                <button class="btn btn-eliminar btn-sm" onclick="eliminarPartido(${partido.id})">Eliminar</button>
-            </form>
-            </div>
-        </div>`;
-    partidosList.appendChild(card);
-}
+        for (const partido of data.partidos) {
+            const resUsername = await fetch(`http://localhost:3000/getOwnerUsername/${partido.id}`);
+            const dataUsername = await resUsername.json();
+            if (!dataUsername.success) {
+                partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar el nombre de usuario.</p>';
+                return;
+            }
+            const username = dataUsername.username;
+            const card = document.createElement('div');
+            card.className="m-3";
+            const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
+            const dataJugadores = await resJugadores.json();
+            const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
+            card.innerHTML += `
+                <div class="card" style="width: 18rem;">
+                    <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <form id="fichajeForm">
+                            <input type="hidden" id="id_partido" value="${partido.id}">
+                            <h5 class="card-title">${username}</h5>
+                            <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                            <p class="card-text">Dia: ${partido.fecha}</p>
+                            <p class="card-text">Hora: ${partido.hora}</p>
+                            <button type="button" class="btn btn-editar btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal" onclick="abrirEditarPartido(${partido.id}, '${partido.fecha}', '${partido.hora}', ${partido.jugadores})">Editar</button>
+                            <button class="btn btn-eliminar btn-sm" onclick="eliminarPartido(${partido.id})">Eliminar</button>
+                        </form>
+                    </div>
+                </div>`;
+            partidosList.appendChild(card);
+        }
     } catch (error) {
         console.error('Error al cargar los partidos:', error);
         partidosList.innerHTML = '<p style="color:#edcd3d;">Error al cargar los partidos</p>';
@@ -336,7 +338,7 @@ async function fichaje(id_partido){
         msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
         msgDiv.innerText = data.message;
         setTimeout(() => {
-            window.location.href = 'misPartidos.html';
+            window.location.reload();
         }, 2000); // Redirige después de 2 segundos
     } else {
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
@@ -379,7 +381,7 @@ async function eliminarPartido(id_partido) {
     const res = await fetch('http://localhost:3000/eliminarPartido', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_partido })
+        body: JSON.stringify({ id_partido, usernamelog})
     });
 
     const data = await res.json();
@@ -413,7 +415,7 @@ async function salirPartido(id_partido) {
         msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
         msgDiv.innerText = data.message;
         setTimeout(() => {
-            window.location.href = 'partidosUsuario.html';
+            window.location.reload();
         }, 2000); // Redirige después de 2 segundos
     } else {
         msgDiv.style.display = 'block';
@@ -445,8 +447,8 @@ async function crearPartidoAdmin() {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-warning d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de error
         msgDiv.innerText = data.message;
-         setTimeout(() => {
-        window.location.href = 'Partidos(admin).html';
+        setTimeout(() => {
+            window.location.href = 'Partidos(admin).html';
     }, 1000);
     } else {
         msgDiv.style.display = 'block';
