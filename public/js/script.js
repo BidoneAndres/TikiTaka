@@ -68,7 +68,9 @@ async function register() {
 async function crearPartido() {
     const fecha = document.getElementById('fecha').value;
     const horario = document.getElementById('horario').value;
-    const jugadores = document.getElementById('jugadores').value;
+    let jugadores = parseInt(document.getElementById('jugadores').value, 10);
+
+    jugadores = jugadores + 1;
 
     const msgDiv = document.getElementById('message');
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
@@ -79,7 +81,7 @@ async function crearPartido() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fecha, horario, jugadores })
+        body: JSON.stringify({ fecha, horario, jugadores})
     });
 
     const data = await res.json();
@@ -128,11 +130,11 @@ async function partidosAjenos(){
                             <input type="hidden" id="id_partido" value="${partido.id}">
                             <h5 class="card-title">${username}</h5>
                             <p class="card-text">Jugadores: ${cantJugadores}/14</p>
-                            <p class="card-text">Dia: ${partido.fecha}</p>
+                            <p class="card-text">Dia: ${formatearFecha(partido.fecha)}</p>
                             <p class="card-text">Hora: ${partido.hora}</p>
                             <button type="submit" class="btn btn-primary">Entrar</button>
                         </form>
-          href = 'misPartidos.html'          </div>
+                    </div>
                 </div>`;
             partidosList.appendChild(card);
         }
@@ -195,8 +197,9 @@ async function partidosUsuario(){
                     <div class="card-body">
                         <h5 class="card-title">${username}</h5>
                         <p class="card-text">Jugadores: ${cantJugadores}/14</p>
-                        <p class="card-text">Dia: ${partido.fecha}</p>
+                        <p class="card-text">Dia: ${formatearFecha(partido.fecha)}</p>
                         <p class="card-text">Hora: ${partido.hora}</p>
+                        <p class="card-text">Cancha: ${partido.cancha}</p>
                         ${botones}
                     </div>
                 </div>`;
@@ -243,10 +246,12 @@ async function mostrarPartidos(){
                             <input type="hidden" id="id_partido" value="${partido.id}">
                             <h5 class="card-title">${username}</h5>
                             <p class="card-text">Jugadores: ${cantJugadores}/14</p>
-                            <p class="card-text">Dia: ${partido.fecha}</p>
+                            <p class="card-text">Dia: ${formatearFecha(partido.fecha)}</p>
                             <p class="card-text">Hora: ${partido.hora}</p>
+                            <p class="card-text">Hora: ${partido.cancha}</p>
                             <button type="button" class="btn btn-editar btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal" onclick="abrirEditarPartido(${partido.id}, '${partido.fecha}', '${partido.hora}', ${partido.jugadores})">Editar</button>
                             <button class="btn btn-eliminar btn-sm" onclick="eliminarPartido(${partido.id})">Eliminar</button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalConfirmarCancha" onclick="abrirConfirmarCancha(${partido.id})"> Confirmar </button>
                         </form>
                     </div>
                 </div>`;
@@ -475,7 +480,7 @@ async function cargarUsers(){
             <td>${usuario.username}</td>
             <td>${usuario.name}</td>
             <td>${usuario.lastname}</td>
-            <td>${usuario.birthdate}</td>
+            <td>${formatearFecha(usuario.birthdate)}</td>
             <td>${usuario.email}</td>
             <td>
              <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar"
@@ -526,7 +531,7 @@ async function modificarUser() {
         body: JSON.stringify({ user,name, lastname, email, birthdate})
     });
 
-    const data = res.json();
+    const data = await res.json();
     if (data.success) {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
@@ -557,7 +562,7 @@ async function eliminarUser(id){
         },
         body: JSON.stringify({id})
     });
-    const data = res.json();
+    const data = await res.json();
     if (data.success) {
         msgDiv.style.display = 'block';
         msgDiv.className = "alert alert-success d-flex align-items-center text-center"; // Cambia la clase para aplicar estilos de éxito
@@ -576,6 +581,82 @@ async function eliminarUser(id){
 
 }
 
+async function cargarDatos(){
+    const resUsuarios = await fetch('http://localhost:3000/cantUsuarios');
+    const dataUsuarios = await resUsuarios.json();
+    if (dataUsuarios.success) {
+        document.getElementById('cantJugadores').innerText = dataUsuarios.cantidad;
+    } else {
+        document.getElementById('cantJugadores').innerText = 'Error';
+    }
+
+    const resPartidos = await fetch('http://localhost:3000/cantPartidos');
+    const dataPartidos = await resPartidos.json();
+    if (dataPartidos.success) {
+        document.getElementById('cantPartidos').innerText = dataPartidos.cantidad;
+    } else {
+        document.getElementById('cantPartidos').innerText = 'Error';
+    }
+}
+
+async function crearUserAdmin(){
+  const username = document.getElementById('nuevoUsername').value;
+  const name = document.getElementById('nuevoName').value;
+  const lastname = document.getElementById('nuevoLastname').value;
+  const birthdate = document.getElementById('nuevoBirthdate').value;
+  const email = document.getElementById('nuevoEmail').value;
+  const password = document.getElementById('nuevoPassword').value;
+  const repPassword = document.getElementById('nuevoRepPassword').value;
+
+  const res = await fetch('http://localhost:3000/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, name, lastname, birthdate, email, password, repPassword })
+  });
+  const data = await res.json();
+  const msgDiv = document.getElementById('message');
+  if (data.success) {
+    msgDiv.style.display = 'block';
+    msgDiv.className = "alert alert-success d-flex align-items-center text-center";
+    msgDiv.innerText = data.message;
+    setTimeout(() => { window.location.reload(); }, 1000);
+  } else {
+    msgDiv.style.display = 'block';
+    msgDiv.className = "alert alert-warning d-flex align-items-center text-center";
+    msgDiv.innerText = data.message;
+  }
+}
+
+function formatearFecha(fechaISO) {
+    if (!fechaISO) return '';
+    const fecha = new Date(fechaISO);
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = String(fecha.getFullYear()).slice(-2);
+    return `${dia}/${mes}/${anio}`;
+}
+
+function abrirConfirmarCancha(idPartido) {
+    document.getElementById('partidoAConfirmar').value = idPartido;
+}
+
+document.getElementById('formConfirmarCancha').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const idPartido = document.getElementById('partidoAConfirmar').value;
+    const numeroCancha = document.getElementById('numeroCancha').value;
+
+    const res = await fetch('http://localhost:3000/confirmarPartido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_partido: idPartido, cancha: numeroCancha })
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.reload();
+    } else {
+        alert(data.message || 'Error al confirmar partido');
+    }
+});
 window.eliminarPartido = eliminarPartido;
 window.salirPartido = salirPartido;
 window.crearPartidoAdmin = crearPartidoAdmin;

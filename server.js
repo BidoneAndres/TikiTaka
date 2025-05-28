@@ -208,7 +208,7 @@ app.post('/crearPartido', (req, res) => {
 });
 
 app.get('/partidosAjenos', (req, res) => {
-  db.query('SELECT * FROM partidos WHERE owner != ?;', [userLoggedIn], async (err, result) => {
+  db.query('SELECT * FROM partidos WHERE owner != ? AND fecha >= CURDATE();', [userLoggedIn], async (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Error al obtener los partidos');
@@ -217,11 +217,9 @@ app.get('/partidosAjenos', (req, res) => {
       return res.send({ success: true, partidos: [] });
     }
 
-    // Filtrar partidos donde el usuario NO está fichado
     const partidosFiltrados = [];
     for (const partido of result) {
       const id_partido = partido.id;
-      // Obtener cantidad de jugadores para saber cuántas columnas hay
       const maxJugadores = partido.jugadores;
       const campos = Array.from({length: maxJugadores}, (_, i) => `id_jugador${i+1}`).join(', ');
       const sql = `SELECT ${campos} FROM plantel_${id_partido} WHERE id_partido = ? LIMIT 1`;
@@ -233,15 +231,17 @@ app.get('/partidosAjenos', (req, res) => {
           });
         });
         let fichado = false;
+        let inscriptos = 0;
         if (rows.length > 0) {
           for (let i = 1; i <= maxJugadores; i++) {
             if (Number(rows[0][`id_jugador${i}`]) == Number(userLoggedIn)) {
               fichado = true;
-              break;
             }
+            if (rows[0][`id_jugador${i}`]) inscriptos++;
           }
         }
-        if (!fichado) partidosFiltrados.push(partido);
+        // Solo agrega partidos donde el usuario NO está fichado y NO está lleno
+        if (!fichado && inscriptos < maxJugadores) partidosFiltrados.push(partido);
       } catch (e) {
         console.error(e);
       }
@@ -251,7 +251,7 @@ app.get('/partidosAjenos', (req, res) => {
 });
 
 app.get('/partidosPropios', (req, res) => {
-  db.query('SELECT * FROM partidos', async (err, result) => {
+  db.query('SELECT * FROM partidos WHERE fecha >= CURDATE();', async (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Error al obtener los partidos');
@@ -296,7 +296,7 @@ app.get('/partidosPropios', (req, res) => {
 });
 
 app.get('/partidos', (req, res) => {
-  db.query('SELECT * FROM partidos;', (err, result) => {
+  db.query('SELECT * FROM partidos WHERE fecha >= CURDATE();', (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Error al obtener los partidos');
@@ -658,7 +658,7 @@ app.post('/modificarUserAdmin', (req, res) => {
     if(err){
       return res.status(500).send({success: false, message:'Error al modificar el usuario'});
     }else{
-      res.send({success: true, message: 'Usuario Modificado Exitosamente'});
+      return res.send({success: true, message: 'Usuario Modificado Exitosamente'});
     }
   });
 });
@@ -673,6 +673,36 @@ app.post('/eliminarUser', (req, res) => {
     }else{
       return res.send({ success: true, message: 'Usuario eliminado exitosamente' });
     }
-    
+  });
+});
+
+app.get('/cantUsuarios', (req, res) => {
+  db.query("SELECT COUNT(*) AS cantidad FROM usuarios WHERE username != 'admin'", (err, result) => {
+    if (err) {
+      return res.status(500).send({success: false, message: 'Error al contar usuarios'});
+    }
+    res.send({success: true, cantidad: result[0].cantidad});
+  });
+});
+
+// Contar partidos
+app.get('/cantPartidos', (req, res) => {
+  db.query('SELECT COUNT(*) AS cantidad FROM partidos', (err, result) => {
+    if (err) {
+      return res.status(500).send({success: false, message: 'Error al contar partidos'});
+    }
+    res.send({success: true, cantidad: result[0].cantidad});
+  });
+});
+
+app.post('/confirmarPartido', (req, res) => {
+  const { id_partido, cancha } = req.body;
+  const sql = 'UPDATE partidos SET cancha = ? WHERE id = ?';
+  db.query(sql, [cancha, id_partido], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({ success: false, message: 'Error al confirmar el partido' });
+    }
+    res.send({ success: true, message: 'Partido confirmado y cancha asignada' });
   });
 });

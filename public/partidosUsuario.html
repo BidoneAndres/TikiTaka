@@ -95,6 +95,15 @@
 <div id="message" style="display:none;"></div>
         <script src="js/script.js"></script>
         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const inputFecha = document.getElementById('fecha');
+              const hoy = new Date();
+              const yyyy = hoy.getFullYear();
+              const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+              const dd = String(hoy.getDate()).padStart(2, '0');
+              const fechaMin = `${yyyy}-${mm}-${dd}`;
+              inputFecha.min = fechaMin;
+            });
             partidosAjenos();
             document.getElementById('crearPartido').addEventListener('submit', function(event) {
                 event.preventDefault();
