@@ -18,6 +18,7 @@ async function login() {
     usernamelog = data.username; // Guarda el nombre de usuario del usuario logueado
     console.log(usernamelog);
     if (data.success) {
+        localStorage.setItem('token', data.token);
         if( usernamelog === 'admin') {
             window.location.href = 'Dashboard(admin).html';
         }else{
@@ -70,20 +71,23 @@ async function crearPartido() {
     const horario = document.getElementById('horario').value;
     let jugadores = parseInt(document.getElementById('jugadores').value, 10);
 
-    jugadores = jugadores + 1;
-
     const msgDiv = document.getElementById('message');
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
     msgDiv.className = "";
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/crearPartido', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
         },
-        body: JSON.stringify({ fecha, horario, jugadores})
+        body: JSON.stringify({ fecha, horario, jugadores })
     });
-
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     const data = await res.json();
     if (data.success) {
         window.location.href = 'partidosUsuario.html';
@@ -99,7 +103,16 @@ async function partidosAjenos(){
     partidosList.innerHTML = '<p style="color:#edcd3d;">Cargando Partidos...</p>';
 
     try {
-        const res = await fetch('http://localhost:3000/partidosAjenos');
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3000/partidosAjenos', {
+            headers: {
+            'Authorization': 'Bearer ' + token
+            }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = 'login.html';
+            return;
+        }
         const data = await res.json();
         // CORRIGE ESTA CONDICIÓN:
             if (!data.success || !data.partidos || data.partidos.length === 0) {
@@ -118,10 +131,6 @@ async function partidosAjenos(){
             const username = dataUsername.username;
             const card = document.createElement('div');
             card.className="m-3";
-    
-            const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
-            const dataJugadores = await resJugadores.json();
-            const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
             card.innerHTML += `
                 <div class="card" style="width: 18rem;">
                     <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
@@ -129,7 +138,7 @@ async function partidosAjenos(){
                         <form id="fichajeForm" onsubmit="fichaje(${partido.id}); return false;">
                             <input type="hidden" id="id_partido" value="${partido.id}">
                             <h5 class="card-title">${username}</h5>
-                            <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                            <p class="card-text">Jugadores: ${14-partido.jugadores}/14</p>
                             <p class="card-text">Dia: ${formatearFecha(partido.fecha)}</p>
                             <p class="card-text">Hora: ${partido.hora}</p>
                             <button type="submit" class="btn btn-primary">Entrar</button>
@@ -150,7 +159,14 @@ async function partidosUsuario(){
 
     try {
         // Obtén el id del usuario logueado
-        const userRes = await fetch('http://localhost:3000/mostrarUser');
+        const token = localStorage.getItem('token');
+        const userRes = await fetch('http://localhost:3000/mostrarUser', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        }); 
+        if (userRes.status === 401 || userRes.status === 403) {
+            window.location.href = 'login.html';
+            return;
+        }
         const userData = await userRes.json();
         if (!userData.success) {
             partidosList.innerHTML = '<p style="color:#edcd3d;">Error al obtener usuario logueado.</p>';
@@ -158,7 +174,13 @@ async function partidosUsuario(){
         }
         const userLoggedInId = userData.id;
 
-        const res = await fetch('http://localhost:3000/partidosPropios');
+        const res = await fetch('http://localhost:3000/partidosPropios', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = 'login.html';
+            return;
+        }
         const data = await res.json();
         if (!data.success || !data.partidos || data.partidos.length === 0) {
             partidosList.innerHTML = '<p style="color:#edcd3d;">No hay partidos.</p>';
@@ -176,9 +198,6 @@ async function partidosUsuario(){
             const username = dataUsername.username;
             const card = document.createElement('div');
             card.className="m-3";
-            const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
-            const dataJugadores = await resJugadores.json();
-            const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
             let botones = '';
             if (partido.owner === userLoggedInId) {
                 botones = `
@@ -196,7 +215,7 @@ async function partidosUsuario(){
                     <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
                     <div class="card-body">
                         <h5 class="card-title">${username}</h5>
-                        <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                        <p class="card-text">Jugadores: ${14-partido.jugadores}/14</p>
                         <p class="card-text">Dia: ${formatearFecha(partido.fecha)}</p>
                         <p class="card-text">Hora: ${partido.hora}</p>
                         <p class="card-text">Cancha: ${partido.cancha}</p>
@@ -235,9 +254,6 @@ async function mostrarPartidos(){
             const username = dataUsername.username;
             const card = document.createElement('div');
             card.className="m-3";
-            const resJugadores = await fetch(`http://localhost:3000/getEspaciosDisponibles/${partido.id}`);
-            const dataJugadores = await resJugadores.json();
-            const cantJugadores = 14 - partido.jugadores + dataJugadores.inscriptos;
             card.innerHTML += `
                 <div class="card" style="width: 18rem;">
                     <img src="./img/Cómo-hacer-una-cancha-de-fútbol.jpg" class="card-img-top" alt="...">
@@ -245,7 +261,7 @@ async function mostrarPartidos(){
                         <form id="fichajeForm">
                             <input type="hidden" id="id_partido" value="${partido.id}">
                             <h5 class="card-title">${username}</h5>
-                            <p class="card-text">Jugadores: ${cantJugadores}/14</p>
+                            <p class="card-text">Jugadores: ${14-partido.jugadores}/14</p>
                             <p class="card-text">Dia: ${formatearFecha(partido.fecha)}</p>
                             <p class="card-text">Hora: ${partido.hora}</p>
                             <p class="card-text">Hora: ${partido.cancha}</p>
@@ -274,7 +290,14 @@ function abrirEditarPartido(id, fecha, hora, jugadores) {
 
 async function cargarUser(){
     
-    const res = await fetch('http://localhost:3000/mostrarUser');
+    const token = localStorage.getItem('token');
+    const res = await fetch('http://localhost:3000/mostrarUser', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     const data = await res.json();
     if (!data.success) {
         console.error('Error al obtener los datos del usuario:', data.message);
@@ -285,19 +308,9 @@ async function cargarUser(){
     }
 }
 
-async function logout() {
-    const res = await fetch('http://localhost:3000/logout', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    const data = await res.json();
-    if (data.success) {
-        window.location.href = 'login.html';
-    } else {
-        console.error('Error al cerrar sesión:', data.message);
-    }
+function logout() {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
 }
 
 async function modUser(){
@@ -306,13 +319,19 @@ async function modUser(){
     const newPassword = document.getElementById('newContrasena').value;
     msgDiv = document.getElementById('message');
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/modUser', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
         },
         body: JSON.stringify({ username, password, newPassword })
     });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     const data = await res.json();
     if (data.success) {
         msgDiv.style.display = 'block';
@@ -329,13 +348,19 @@ async function modUser(){
 }
 
 async function fichaje(id_partido){
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/fichaje', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
         },
         body: JSON.stringify({ id_partido })
     });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     data = await res.json();
     const msgDiv = document.getElementById('message');
     msgDiv.style.display = 'block';
@@ -361,11 +386,19 @@ async function modificarPartido() {
     msgDiv.style.display = 'none';
     msgDiv.className = "";
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/modificarPartido', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify({ id_partido, fecha, horario, jugadores })
     });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
 
     const data = await res.json();
     if (data.success) {
@@ -383,11 +416,19 @@ async function eliminarPartido(id_partido) {
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
     msgDiv.className = "";
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/eliminarPartido', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_partido, usernamelog})
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ id_partido, usernamelog })
     });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
 
     const data = await res.json();
     if (data.success) {
@@ -409,11 +450,19 @@ async function salirPartido(id_partido) {
     const msgDiv = document.getElementById('message');
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
     msgDiv.className = "";
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/salirPartido', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify({ id_partido })
     });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     const data = await res.json();
     if (data.success) {
         msgDiv.style.display = 'block';
@@ -439,14 +488,19 @@ async function crearPartidoAdmin() {
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
     msgDiv.className = "";
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/crearPartidoAdmin', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
         },
         body: JSON.stringify({ username, fecha, horario, jugadores })
     });
-
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     const data = await res.json();
     if (data.success) {
         msgDiv.style.display = 'block';
@@ -466,13 +520,19 @@ async function cargarUsers(){
     const usuariosList = document.getElementById('usuarios');
 
     try {
-        const res = await fetch('http://localhost:3000/cargarUsers');
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3000/cargarUsers', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await res.json();
         if (!data.success || !data.usuarios || data.usuarios.length === 0) {
             usuariosList.innerHTML = '<p style="color:#edcd3d;">No hay Usuarios.</p>';
             return;
         }
-
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = 'login.html';
+            return;
+        }
         usuariosList.innerHTML = '';
         for (const usuario of data.usuarios) {
             const card = document.createElement('tr');
@@ -523,14 +583,19 @@ async function modificarUser() {
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
     msgDiv.className = "";
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/modificarUserAdmin', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
         },
-        body: JSON.stringify({ user,name, lastname, email, birthdate})
+        body: JSON.stringify({ user, name, lastname, email, birthdate })
     });
-
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
     const data = await res.json();
     if (data.success) {
         msgDiv.style.display = 'block';
@@ -555,12 +620,14 @@ async function eliminarUser(id){
     msgDiv.style.display = 'none'; // Oculta el mensaje antes de enviar
     msgDiv.className = "";
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/eliminarUser', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
         },
-        body: JSON.stringify({id})
+        body: JSON.stringify({ id })
     });
     const data = await res.json();
     if (data.success) {
@@ -600,31 +667,35 @@ async function cargarDatos(){
 }
 
 async function crearUserAdmin(){
-  const username = document.getElementById('nuevoUsername').value;
-  const name = document.getElementById('nuevoName').value;
-  const lastname = document.getElementById('nuevoLastname').value;
-  const birthdate = document.getElementById('nuevoBirthdate').value;
-  const email = document.getElementById('nuevoEmail').value;
-  const password = document.getElementById('nuevoPassword').value;
-  const repPassword = document.getElementById('nuevoRepPassword').value;
+    const username = document.getElementById('nuevoUsername').value;
+    const name = document.getElementById('nuevoName').value;
+    const lastname = document.getElementById('nuevoLastname').value;
+    const birthdate = document.getElementById('nuevoBirthdate').value;
+    const email = document.getElementById('nuevoEmail').value;
+    const password = document.getElementById('nuevoPassword').value;
+    const repPassword = document.getElementById('nuevoRepPassword').value;
 
-  const res = await fetch('http://localhost:3000/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, name, lastname, birthdate, email, password, repPassword })
-  });
-  const data = await res.json();
-  const msgDiv = document.getElementById('message');
-  if (data.success) {
-    msgDiv.style.display = 'block';
-    msgDiv.className = "alert alert-success d-flex align-items-center text-center";
-    msgDiv.innerText = data.message;
-    setTimeout(() => { window.location.reload(); }, 1000);
-  } else {
-    msgDiv.style.display = 'block';
-    msgDiv.className = "alert alert-warning d-flex align-items-center text-center";
-    msgDiv.innerText = data.message;
-  }
+    const res = await fetch('http://localhost:3000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, name, lastname, birthdate, email, password, repPassword })
+    });
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        return;
+    }
+    const data = await res.json();
+    const msgDiv = document.getElementById('message');
+    if (data.success) {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-success d-flex align-items-center text-center";
+        msgDiv.innerText = data.message;
+        setTimeout(() => { window.location.reload(); }, 1000);
+    } else {
+        msgDiv.style.display = 'block';
+        msgDiv.className = "alert alert-warning d-flex align-items-center text-center";
+        msgDiv.innerText = data.message;
+    }
 }
 
 function formatearFecha(fechaISO) {
@@ -645,9 +716,13 @@ document.getElementById('formConfirmarCancha').addEventListener('submit', async 
     const idPartido = document.getElementById('partidoAConfirmar').value;
     const numeroCancha = document.getElementById('numeroCancha').value;
 
+    const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:3000/confirmarPartido', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify({ id_partido: idPartido, cancha: numeroCancha })
     });
     const data = await res.json();
