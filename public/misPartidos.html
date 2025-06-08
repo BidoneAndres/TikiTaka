@@ -1,7 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="stylesheet" href="misPartidos.html">
+<link rel="stylesheet" href="css/misPartidos.css">
+    <style>
+        .cerrar-sesion{
+            text-align: center;
+            font-weight: bold;
+            position: absolute;
+            color: white;
+            bottom: 10px;
+            width: 100%;
+        }
+
+
+    </style>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
@@ -55,8 +68,12 @@
         <div class="row">
             <button type="button" id="boton" onclick="window.location.href='#'" class="btn  btn-lg"> Equipo</button>
         </div>
-        
 
+
+        <div class="cerrar-sesion">
+                Asistencia <br>
+                <a href="#" onclick="logout()">Cerrar sesión</a>
+        </div>
 
     </div>
 
