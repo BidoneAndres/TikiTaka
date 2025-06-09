@@ -101,13 +101,13 @@ app.post('/login', (req, res) => {
       const user = result[0];
       const match = await bcrypt.compare(password, user.password);
       if (match) {
-        // Genera el token JWT
+        // Genera el token JWT incluyendo el campo admin
         const token = jwt.sign(
-          { id: user.id, username: user.username }, //aniadir rol 
+          { id: user.id, username: user.username, admin: !!user.admin }, // Incluye admin
           JWT_SECRET,
           { expiresIn: JWT_EXPIRES_IN }
         );
-        res.send({success: true, message: 'Login exitoso', username: user.username, token});
+        res.send({success: true, message: 'Login exitoso', username: user.username, token, admin: !!user.admin});
       } else {
         res.send({success: false, message: 'Usuario o contraseña incorrectos'});
       }
@@ -116,6 +116,14 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
+function verificarAdmin(req, res, next) {
+  if (req.user && req.user.admin) {
+    next();
+  } else {
+    return res.status(403).send({ success: false, message: 'Solo el admin puede realizar esta acción' });
+  }
+}
 
 function verificarToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -275,7 +283,7 @@ app.get('/partidosPropios', verificarToken, (req, res) => {
   });
 });
 
-app.get('/partidos', (req, res) => {
+app.get('/partidos', verificarToken, verificarAdmin,(req, res) => {
   db.query('SELECT * FROM partidos WHERE fecha >= CURDATE();', (err, result) => {
     if (err) {
       console.error(err);
@@ -442,7 +450,7 @@ app.post('/salirPartido', verificarToken, (req, res) => {
     });
 });
 
-app.post('/crearPartidoAdmin', verificarToken, (req, res) => {
+app.post('/crearPartidoAdmin', verificarToken, verificarAdmin, (req, res) => {
   const {username, jugadores, fecha, horario } = req.body;
   db.query('SELECT id FROM usuarios WHERE username = ?', [username], (err, result) => {
     if (err) {
@@ -518,7 +526,7 @@ app.post('/modificarPartido', verificarToken, (req, res) => {
   });
 });
 
-app.get('/cargarUsers', verificarToken, (req, res) => {
+app.get('/cargarUsers', verificarToken, verificarAdmin,(req, res) => {
   db.query('SELECT * FROM usuarios;', (err, result) => {
     if (err) {
       console.error(err);
@@ -532,7 +540,7 @@ app.get('/cargarUsers', verificarToken, (req, res) => {
   });
 });
 
-app.post('/modificarUserAdmin', verificarToken, (req, res) => {
+app.post('/modificarUserAdmin', verificarToken, verificarAdmin,(req, res) => {
   const {user, name, lastname, birthdate, email} = req.body;
   const sql = 'UPDATE usuarios SET username = ?, name = ?, lastname = ?, birthdate = ?, email = ? WHERE username = ?';
   db.query(sql, [user, name, lastname, birthdate, email, user], (err, result)=> {
@@ -544,7 +552,7 @@ app.post('/modificarUserAdmin', verificarToken, (req, res) => {
   });
 });
 
-app.post('/eliminarUser', verificarToken, (req, res) => {
+app.post('/eliminarUser', verificarToken, verificarAdmin,(req, res) => {
   const {id} = req.body; 
   const sql = 'DELETE FROM usuarios WHERE id = ?';
   db.query(sql, [id], (err, result) => {
@@ -567,7 +575,7 @@ app.get('/cantUsuarios', (req, res) => {
 });
 
 // Contar partidos
-app.get('/cantPartidos', (req, res) => {
+app.get('/cantPartidos',(req, res) => {
   db.query('SELECT COUNT(*) AS cantidad FROM partidos', (err, result) => {
     if (err) {
       return res.status(500).send({success: false, message: 'Error al contar partidos'});
@@ -576,7 +584,7 @@ app.get('/cantPartidos', (req, res) => {
   });
 });
 
-app.post('/confirmarPartido', verificarToken, (req, res) => {
+app.post('/confirmarPartido', verificarToken, verificarAdmin,(req, res) => {
   const { id_partido, cancha } = req.body;
   const sql = 'UPDATE partidos SET cancha = ? WHERE id = ?';
   db.query(sql, [cancha, id_partido], (err, result) => {

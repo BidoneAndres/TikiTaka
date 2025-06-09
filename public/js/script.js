@@ -15,11 +15,9 @@ async function login() {
         body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    usernamelog = data.username; // Guarda el nombre de usuario del usuario logueado
-    console.log(usernamelog);
     if (data.success) {
         localStorage.setItem('token', data.token);
-        if( usernamelog === 'admin') {
+        if( data.admin) {
             window.location.href = 'Dashboard(admin).html';
         }else{
             window.location.href = 'partidosUsuario.html';
